@@ -3,7 +3,7 @@ import {
   Box, Typography, Button, TextField, Select, MenuItem,
   FormControl, InputLabel, IconButton, Accordion, AccordionSummary,
   AccordionDetails, Chip, Dialog, DialogTitle, DialogContent, DialogActions,
-  Alert
+  Alert, Drawer, Fab, Grid, Tooltip
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -11,13 +11,21 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   ExpandMore as ExpandMoreIcon,
-  Science as ScienceIcon
+  Science as ScienceIcon,
+  Psychology as AIIcon,
+  AutoFixHigh as AutoFixIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import { useProtocol } from '../../../contexts/ProtocolContext';
 import { useValidation } from '../../../hooks/useValidation';
 import { useNotification } from '../../../hooks/useNotification';
 import { SectionHeader, SectionCompletionAlert } from '../index';
 import { colors } from '../../../styles/theme';
+import { 
+  AIAssistantPanel, 
+  AIContentGenerator, 
+  AIValidationInsights 
+} from '../../ai';
 
 const StyledCard = styled(Box)(() => ({
   background: `linear-gradient(135deg, ${colors.primary.light}15 0%, ${colors.secondary.light}15 100%)`,
@@ -80,6 +88,10 @@ export const ObjectivesEditor: React.FC = () => {
   const [sectionValidation, setSectionValidation] = useState<any>(null);
   const [showCompletionAlert, setShowCompletionAlert] = useState(false);
   const [lastCompletionScore, setLastCompletionScore] = useState(0);
+  
+  // AI Integration State
+  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
+  const [aiGeneratorOpen, setAiGeneratorOpen] = useState(false);
 
   // Load validation status on mount and when protocol changes
   useEffect(() => {
@@ -214,6 +226,36 @@ export const ObjectivesEditor: React.FC = () => {
     }
   };
 
+  // AI Integration Functions
+  const handleAIContentSuggestion = (content: string) => {
+    setCurrentObjective({
+      ...currentObjective,
+      objectiveText: content
+    });
+    notification.success('AI suggestion applied!');
+  };
+
+  const handleAIContentGenerated = (content: string) => {
+    // Parse AI generated content and create new objective
+    const newObjective: LocalObjective = {
+      objectiveType: 'primary',
+      objectiveText: content
+    };
+    setCurrentObjective(newObjective);
+    setDialogOpen(true);
+    notification.success('AI content generated! Review and save.');
+  };
+
+  const getCurrentSectionData = () => {
+    return {
+      objectives: objectives,
+      totalObjectives: objectives.length,
+      primaryObjectives: objectives.filter(obj => obj.objectiveType === 'primary').length,
+      secondaryObjectives: objectives.filter(obj => obj.objectiveType === 'secondary').length,
+      exploratoryObjectives: objectives.filter(obj => obj.objectiveType === 'exploratory').length
+    };
+  };
+
   return (
     <Box>
       {/* Section Header with Validation */}
@@ -237,115 +279,196 @@ export const ObjectivesEditor: React.FC = () => {
         />
       )}
 
-      {/* Add Objective Button */}
-      <Box sx={{ mb: 3 }}>
-        <GradientButton
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleAddObjective}
-          size="large"
-        >
-          Add Objective
-        </GradientButton>
-      </Box>
-
-      {/* Objectives List */}
-      {objectives.length === 0 ? (
-        <Alert severity="info" icon={<ScienceIcon />}>
-          No objectives defined yet. Click "Add Objective" to create your first trial objective.
-        </Alert>
-      ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {objectives.map((objective, index) => (
-            <StyledAccordion
-              key={objective.id || index}
+      {/* Main Content Grid */}
+      <Grid container spacing={3}>
+        {/* Left Column - Main Content */}
+        <Grid item xs={12} lg={8}>
+          {/* Action Buttons */}
+          <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <GradientButton
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddObjective}
+              size="large"
+            >
+              Add Objective
+            </GradientButton>
+            <Button
+              variant="outlined"
+              startIcon={<AutoFixIcon />}
+              onClick={() => setAiGeneratorOpen(true)}
               sx={{
-                border: `2px solid ${getObjectiveTypeColor(objective.objectiveType)}30`,
+                borderColor: colors.primary.main,
+                color: colors.primary.main,
                 '&:hover': {
-                  borderColor: `${getObjectiveTypeColor(objective.objectiveType)}60`,
-                }
+                  borderColor: colors.primary.dark,
+                  background: colors.primary.light + '10',
+                },
               }}
             >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-                  <Chip
-                    label={objective.objectiveType.toUpperCase()}
-                    size="small"
-                    sx={{
-                      backgroundColor: getObjectiveTypeColor(objective.objectiveType),
-                      color: '#ffffff',
-                      fontWeight: 700,
-                      fontSize: '0.75rem',
-                    }}
-                  />
-                  <Typography variant="body1" fontWeight={600} sx={{ flex: 1 }}>
-                    {objective.objectiveText || 'Untitled Objective'}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditObjective(index);
-                      }}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (objective.id) handleDeleteObjective(objective.id);
-                      }}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  {objective.objectiveText}
-                </Typography>
-                
-                {objective.objectiveType === 'primary' && objective.estimand && (
-                  <Box>
-                    <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
-                      ICH E9(R1) Estimand Framework:
-                    </Typography>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                      {objective.estimand.treatment && (
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Treatment</Typography>
-                          <Typography variant="body2">{objective.estimand.treatment}</Typography>
-                        </Box>
-                      )}
-                      {objective.estimand.population && (
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Population</Typography>
-                          <Typography variant="body2">{objective.estimand.population}</Typography>
-                        </Box>
-                      )}
-                      {objective.estimand.endpoint && (
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Endpoint</Typography>
-                          <Typography variant="body2">{objective.estimand.endpoint}</Typography>
-                        </Box>
-                      )}
-                      {objective.estimand.intercurrentEvents && (
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Intercurrent Events</Typography>
-                          <Typography variant="body2">{objective.estimand.intercurrentEvents}</Typography>
-                        </Box>
-                      )}
+              AI Generate
+            </Button>
+          </Box>
+
+          {/* Objectives List */}
+          {objectives.length === 0 ? (
+            <Alert severity="info" icon={<ScienceIcon />}>
+              No objectives defined yet. Click "Add Objective" to create your first trial objective, or use "AI Generate" for intelligent suggestions.
+            </Alert>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {objectives.map((objective, index) => (
+                <StyledAccordion
+                  key={objective.id || index}
+                  sx={{
+                    border: `2px solid ${getObjectiveTypeColor(objective.objectiveType)}30`,
+                    '&:hover': {
+                      borderColor: `${getObjectiveTypeColor(objective.objectiveType)}60`,
+                    }
+                  }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                      <Chip
+                        label={objective.objectiveType.toUpperCase()}
+                        size="small"
+                        sx={{
+                          backgroundColor: getObjectiveTypeColor(objective.objectiveType),
+                          color: '#ffffff',
+                          fontWeight: 700,
+                          fontSize: '0.75rem',
+                        }}
+                      />
+                      <Typography variant="body1" fontWeight={600} sx={{ flex: 1 }}>
+                        {objective.objectiveText || 'Untitled Objective'}
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditObjective(index);
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (objective.id) handleDeleteObjective(objective.id);
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
                     </Box>
-                  </Box>
-                )}
-              </AccordionDetails>
-            </StyledAccordion>
-          ))}
-        </Box>
-      )}
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      {objective.objectiveText}
+                    </Typography>
+                    
+                    {objective.objectiveType === 'primary' && objective.estimand && (
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+                          ICH E9(R1) Estimand Framework:
+                        </Typography>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                          {objective.estimand.treatment && (
+                            <Box>
+                              <Typography variant="caption" color="text.secondary">Treatment</Typography>
+                              <Typography variant="body2">{objective.estimand.treatment}</Typography>
+                            </Box>
+                          )}
+                          {objective.estimand.population && (
+                            <Box>
+                              <Typography variant="caption" color="text.secondary">Population</Typography>
+                              <Typography variant="body2">{objective.estimand.population}</Typography>
+                            </Box>
+                          )}
+                          {objective.estimand.endpoint && (
+                            <Box>
+                              <Typography variant="caption" color="text.secondary">Endpoint</Typography>
+                              <Typography variant="body2">{objective.estimand.endpoint}</Typography>
+                            </Box>
+                          )}
+                          {objective.estimand.intercurrentEvents && (
+                            <Box>
+                              <Typography variant="caption" color="text.secondary">Intercurrent Events</Typography>
+                              <Typography variant="body2">{objective.estimand.intercurrentEvents}</Typography>
+                            </Box>
+                          )}
+                        </Box>
+                      </Box>
+                    )}
+                  </AccordionDetails>
+                </StyledAccordion>
+              ))}
+            </Box>
+          )}
+        </Grid>
+
+        {/* Right Column - AI Validation Insights */}
+        <Grid item xs={12} lg={4}>
+          <AIValidationInsights
+            sectionName="Trial Objectives and Estimands"
+            content={getCurrentSectionData()}
+            protocolContext={protocol}
+            onImprovementSuggestion={handleAIContentSuggestion}
+            autoValidate={true}
+          />
+        </Grid>
+      </Grid>
+
+      {/* AI Assistant Floating Action Button */}
+      <Tooltip title="Open AI Assistant">
+        <Fab
+          color="primary"
+          onClick={() => setAiDrawerOpen(true)}
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+            '&:hover': {
+              background: `linear-gradient(135deg, ${colors.primary.dark} 0%, ${colors.secondary.dark} 100%)`,
+            },
+          }}
+        >
+          <AIIcon />
+        </Fab>
+      </Tooltip>
+
+      {/* AI Assistant Drawer */}
+      <Drawer
+        anchor="right"
+        open={aiDrawerOpen}
+        onClose={() => setAiDrawerOpen(false)}
+        PaperProps={{
+          sx: {
+            width: 450,
+            maxWidth: '90vw',
+          },
+        }}
+      >
+        <AIAssistantPanel
+          sectionName="Trial Objectives and Estimands"
+          currentContent={getCurrentSectionData()}
+          protocolContext={protocol}
+          onContentSuggestion={handleAIContentSuggestion}
+          onClose={() => setAiDrawerOpen(false)}
+        />
+      </Drawer>
+
+      {/* AI Content Generator Dialog */}
+      <AIContentGenerator
+        open={aiGeneratorOpen}
+        onClose={() => setAiGeneratorOpen(false)}
+        sectionName="Trial Objectives and Estimands"
+        onContentGenerated={handleAIContentGenerated}
+        protocolContext={protocol}
+      />
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>

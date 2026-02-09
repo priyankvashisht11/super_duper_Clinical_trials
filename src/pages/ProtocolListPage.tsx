@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Card, CardContent, LinearProgress, Chip, Fade, Grow, alpha, Button } from '@mui/material';
+import { 
+  Box, Typography, Card, CardContent, LinearProgress, Chip, Fade, Grow, alpha, Button,
+  Tabs, Tab, Grid, IconButton
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { Science, CheckCircle, Schedule, Edit, Add as AddIcon, Description as TemplateIcon } from '@mui/icons-material';
+import { 
+  Science, CheckCircle, Schedule, Edit, Add as AddIcon, Description as TemplateIcon,
+  Psychology as AIIcon, Assessment as AssessmentIcon
+} from '@mui/icons-material';
 import { PrimaryButton } from '../components/styled/Buttons';
 import { ProtocolTemplates } from '../components/protocol-builder/ProtocolTemplates';
 import { ProtocolListSkeleton } from '../components/common/LoadingSkeleton';
+import { AIProtocolDashboard } from '../components/ai';
 import { colors } from '../styles/theme';
 
 const PageContainer = styled(Box)(({ theme }) => ({

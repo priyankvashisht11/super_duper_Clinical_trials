@@ -4,6 +4,7 @@ export { documentService, DocumentService } from './documentService';
 export { storageService, StorageService } from './storageService';
 export { demoService, DemoService } from './demoService';
 export { protocolService } from './protocolService';
+export { aiService } from './aiService';
 
 // Re-export types from storage service
 export type {

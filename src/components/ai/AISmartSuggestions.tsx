@@ -19,7 +19,8 @@ import {
   AutoFixHigh as AutoFixIcon,
 } from '@mui/icons-material';
 import { colors } from '../../styles/theme';
-import { aiService, AIFormSuggestionsResponse } from '../../services/aiService';
+import { aiService } from '../../services/aiService';
+import type { AIFormSuggestionsResponse } from '../../services/aiService';
 import { useDebounce } from '../../utils/performance';
 
 interface AISmartSuggestionsProps {

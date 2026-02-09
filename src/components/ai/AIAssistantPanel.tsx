@@ -31,7 +31,8 @@ import {
   Close as CloseIcon,
 } from '@mui/icons-material';
 import { colors } from '../../styles/theme';
-import { aiService, AIAssistanceResponse } from '../../services/aiService';
+import { aiService } from '../../services/aiService';
+import type { AIAssistanceResponse } from '../../services/aiService';
 import { useNotification } from '../../hooks/useNotification';
 
 interface AIAssistantPanelProps {

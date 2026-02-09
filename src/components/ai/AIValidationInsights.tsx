@@ -31,7 +31,8 @@ import {
   AutoFixHigh as AutoFixIcon,
 } from '@mui/icons-material';
 import { colors } from '../../styles/theme';
-import { aiService, AIValidationResponse } from '../../services/aiService';
+import { aiService } from '../../services/aiService';
+import type { AIValidationResponse } from '../../services/aiService';
 import { useNotification } from '../../hooks/useNotification';
 
 interface AIValidationInsightsProps {

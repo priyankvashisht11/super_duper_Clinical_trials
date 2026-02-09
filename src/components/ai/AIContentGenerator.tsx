@@ -30,7 +30,8 @@ import {
   Check as CheckIcon,
 } from '@mui/icons-material';
 import { colors } from '../../styles/theme';
-import { aiService, AIContentGenerationResponse } from '../../services/aiService';
+import { aiService } from '../../services/aiService';
+import type { AIContentGenerationResponse } from '../../services/aiService';
 import { useNotification } from '../../hooks/useNotification';
 
 interface AIContentGeneratorProps {

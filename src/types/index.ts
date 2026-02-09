@@ -185,3 +185,6 @@ export type RecruitmentStatus =
 
 // Re-export styled component types
 export * from './styled';
+
+// Re-export validation types
+export * from './validation.types';

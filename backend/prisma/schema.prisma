@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Protocol {
+  id                          String    @id @default(uuid())
+  sponsorProtocolIdentifier   String    @unique @map("sponsor_protocol_identifier") @db.VarChar(100)
+  fullTitle                   String    @map("full_title") @db.Text
+  shortTitle                  String?   @map("short_title") @db.VarChar(250)
+  protocolVersion             String    @map("protocol_version") @db.VarChar(50)
+  protocolDate                DateTime  @map("protocol_date") @db.Date
+  
+  // Amendment tracking
+  originalProtocolIndicator   Boolean   @default(true) @map("original_protocol_indicator")
+  protocolAmendmentNumber     String?   @map("protocol_amendment_number") @db.VarChar(20)
+  amendmentScope              String?   @map("amendment_scope") @db.VarChar(50)
+  
+  // Trial basic info
+  trialPhase                  String?   @map("trial_phase") @db.VarChar(50)
+  indication                  String?   @map("indication") @db.Text
+  studyType                   String    @default("Interventional") @map("study_type") @db.VarChar(50)
+  
+  // Status tracking
+  protocolStatus              String    @default("draft") @map("protocol_status") @db.VarChar(50)
+  completenessPercentage      Int       @default(0) @map("completeness_percentage")
+  
+  // USDM storage
+  usdmJson                    Json?     @map("usdm_json")
+  
+  // Metadata
+  createdBy                   String    @map("created_by") @db.VarChar(100)
+  createdAt                   DateTime  @default(now()) @map("created_at")
+  updatedBy                   String?   @map("updated_by") @db.VarChar(100)
+  updatedAt                   DateTime  @default(now()) @updatedAt @map("updated_at")
+  
+  // Soft delete
+  deletedAt                   DateTime? @map("deleted_at")
+  
+  // Validation tracking
+  lastValidationId            String?   @map("last_validation_id")
+  lastValidationDate          DateTime? @map("last_validation_date")
+  
+  // Relations
+  sections                    ProtocolSection[]
+  objectives                  Objective[]
+  eligibilityCriteria         EligibilityCriterion[]
+  interventions               Intervention[]
+  validationResults           ValidationResult[]
+  
+  @@map("protocols")
+}
+
+model ProtocolSection {
+  id              String    @id @default(uuid())
+  protocolId      String    @map("protocol_id")
+  sectionNumber   String    @map("section_number") @db.VarChar(10)
+  sectionTitle    String    @map("section_title") @db.VarChar(200)
+  sectionType     String    @map("section_type") @db.VarChar(50)
+  
+  // Content stored as structured JSON
+  content         Json      @default("{}")
+  
+  // Tracking
+  isRequired      Boolean   @default(false) @map("is_required")
+  isComplete      Boolean   @default(false) @map("is_complete")
+  orderIndex      Int       @map("order_index")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+  
+  // Relations
+  protocol        Protocol  @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  
+  @@unique([protocolId, sectionNumber], name: "unique_protocol_section")
+  @@index([protocolId])
+  @@map("protocol_sections")
+}
+
+model Objective {
+  id              String    @id @default(uuid())
+  protocolId      String    @map("protocol_id")
+  objectiveType   String    @map("objective_type") @db.VarChar(20)
+  orderIndex      Int       @map("order_index")
+  objectiveText   String    @map("objective_text") @db.Text
+  
+  // Estimand (ICH E9 R1)
+  estimand        Json?
+  rationale       String?   @db.Text
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+  
+  // Relations
+  protocol        Protocol  @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  
+  @@index([protocolId])
+  @@map("objectives")
+}
+
+model EligibilityCriterion {
+  id              String    @id @default(uuid())
+  protocolId      String    @map("protocol_id")
+  criterionType   String    @map("criterion_type") @db.VarChar(10)
+  criterionNumber String    @map("criterion_number") @db.VarChar(10)
+  criterionText   String    @map("criterion_text") @db.Text
+  orderIndex      Int       @map("order_index")
+  isCritical      Boolean   @default(false) @map("is_critical")
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+  
+  // Relations
+  protocol        Protocol  @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  
+  @@unique([protocolId, criterionType, criterionNumber], name: "unique_protocol_criterion")
+  @@index([protocolId])
+  @@map("eligibility_criteria")
+}
+
+model Intervention {
+  id                      String    @id @default(uuid())
+  protocolId              String    @map("protocol_id")
+  interventionType        String    @map("intervention_type") @db.VarChar(50)
+  productName             String    @map("product_name") @db.VarChar(200)
+  dosageForm              String?   @map("dosage_form") @db.VarChar(100)
+  routeOfAdministration   String?   @map("route_of_administration") @db.VarChar(100)
+  dose                    String?   @db.VarChar(50)
+  doseUnit                String?   @map("dose_unit") @db.VarChar(20)
+  frequency               String?   @db.VarChar(100)
+  duration                String?   @db.VarChar(100)
+  rationale               String?   @db.Text
+  
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at")
+  
+  // Relations
+  protocol                Protocol  @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  
+  @@index([protocolId])
+  @@map("interventions")
+}
+
+model ControlledTerminology {
+  id              String    @id @default(uuid())
+  domain          String    @db.VarChar(50)
+  code            String    @db.VarChar(50)
+  displayName     String    @map("display_name") @db.VarChar(200)
+  definition      String?   @db.Text
+  parentCode      String?   @map("parent_code") @db.VarChar(50)
+  isActive        Boolean   @default(true) @map("is_active")
+  
+  @@unique([domain, code], name: "unique_domain_code")
+  @@index([domain])
+  @@map("controlled_terminologies")
+}
+
+// Validation Rules Configuration
+model ValidationRule {
+  id          String   @id @default(uuid())
+  ruleId      String   @unique @map("rule_id") @db.VarChar(50)
+  ruleName    String   @map("rule_name") @db.VarChar(200)
+  category    String   @db.VarChar(50) // "m11_conformance", "cross_section", "gcp", "india_specific"
+  severity    String   @db.VarChar(20) // "error", "warning", "info"
+  description String   @db.Text
+  section     String?  @db.VarChar(10) // M11 section number this rule applies to
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  
+  @@index([category])
+  @@index([severity])
+  @@map("validation_rules")
+}
+
+// Validation Results Storage
+model ValidationResult {
+  id                String   @id @default(uuid())
+  protocolId        String   @map("protocol_id")
+  validationDate    DateTime @default(now()) @map("validation_date")
+  overallStatus     String   @map("overall_status") @db.VarChar(50) // "valid", "invalid", "valid_with_warnings"
+  completenessScore Int      @default(0) @map("completeness_score")
+  
+  // Results as JSON
+  results           Json     // Array of validation issues
+  sectionStatus     Json     @map("section_status") // Status per section
+  
+  // Relations
+  protocol          Protocol @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  
+  @@index([protocolId])
+  @@index([validationDate])
+  @@map("validation_results")
+}

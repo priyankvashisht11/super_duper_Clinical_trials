@@ -77,6 +77,12 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
             <NavMenuItem href="/bookmarks">
               Bookmarks
             </NavMenuItem>
+            <NavMenuItem href="/protocols">
+              Protocols
+            </NavMenuItem>
+            <NavMenuItem href="/protocol-builder">
+              Protocol Builder
+            </NavMenuItem>
             <NavMenuItem href="/about">
               About
             </NavMenuItem>

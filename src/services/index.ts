@@ -3,6 +3,7 @@ export { searchService, SearchService } from './searchService';
 export { documentService, DocumentService } from './documentService';
 export { storageService, StorageService } from './storageService';
 export { demoService, DemoService } from './demoService';
+export { protocolService } from './protocolService';
 
 // Re-export types from storage service
 export type {
@@ -13,3 +14,13 @@ export type {
   UserDataExport,
   StorageStats
 } from './storageService';
+
+// Re-export types from protocol service
+export type {
+  Protocol,
+  ProtocolSection,
+  Objective,
+  EligibilityCriterion,
+  Intervention,
+  CreateProtocolInput
+} from './protocolService';

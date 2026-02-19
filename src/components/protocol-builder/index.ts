@@ -1,5 +1,6 @@
 export { SectionNav } from './SectionNav';
 export { ProtocolMetadataForm } from './ProtocolMetadataForm';
+export { ProtocolMetadataFormEnhanced } from './ProtocolMetadataFormEnhanced';
 export { ValidationStatusBar } from './ValidationStatusBar';
 export { SectionCompletionAlert } from './SectionCompletionAlert';
 export { ValidationTooltip } from './ValidationTooltip';

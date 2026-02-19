@@ -182,7 +182,18 @@ export const AssessmentsEditor: React.FC = () => {
           </Box>
 
           {assessments.length === 0 ? (
-            <Alert severity="info">
+            <Alert 
+              severity="info"
+              sx={{ 
+                backgroundColor: '#e3f2fd',
+                border: '2px solid #2196f3',
+                '& .MuiAlert-icon': { color: '#1976d2' },
+                '& .MuiAlert-message': { 
+                  color: '#0d47a1',
+                  '& .MuiTypography-root': { color: '#0d47a1', fontWeight: 600 }
+                }
+              }}
+            >
               No assessments defined. Click "Add Assessment" to create your Schedule of Activities.
             </Alert>
           ) : (

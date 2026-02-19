@@ -242,7 +242,18 @@ export const ReferencesEditor: React.FC = () => {
           </Box>
 
           {references.length === 0 ? (
-            <Alert severity="info">
+            <Alert 
+              severity="info"
+              sx={{ 
+                backgroundColor: '#e3f2fd',
+                border: '2px solid #2196f3',
+                '& .MuiAlert-icon': { color: '#1976d2' },
+                '& .MuiAlert-message': { 
+                  color: '#0d47a1',
+                  '& .MuiTypography-root': { color: '#0d47a1', fontWeight: 600 }
+                }
+              }}
+            >
               <Typography variant="body2" fontWeight={600} gutterBottom>
                 No references added yet
               </Typography>
@@ -333,7 +344,7 @@ export const ReferencesEditor: React.FC = () => {
           {editingReference.id ? 'Edit Reference' : 'Add New Reference'}
         </DialogTitle>
         <DialogContent>
-          <FormControl fullWidth margin="normal">
+          <FormControl fullWidth margin="normal" sx={{ mt: 4 }}>
             <InputLabel>Reference Type</InputLabel>
             <Select
               value={editingReference.type || 'journal'}

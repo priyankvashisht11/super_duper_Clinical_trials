@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Routes, Route, Navigate, useParams as useRouteParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Card, CircularProgress, Fade, IconButton, Tooltip, alpha, Button } from '@mui/material';
+import { Box, Typography, Card, CircularProgress, Fade, IconButton, Tooltip, alpha, Button, Fab, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { Error as ErrorIcon, Visibility, VisibilityOff, Download as DownloadIcon, ContentCopy as ContentCopyIcon, Keyboard as KeyboardIcon, Help as HelpIcon } from '@mui/icons-material';
+import { Error as ErrorIcon, Visibility, VisibilityOff, Download as DownloadIcon, ContentCopy as ContentCopyIcon, Keyboard as KeyboardIcon, Help as HelpIcon, SmartToy as AIIcon, Delete as DeleteIcon, CheckCircle, Home as HomeIcon, ArrowBack as BackIcon, DriveFileRenameOutline as RenameIcon } from '@mui/icons-material';
 import { ProtocolProvider, useProtocol } from '../contexts/ProtocolContext';
-import { SectionNav, ProtocolMetadataForm, ExportManager, CloneProtocolDialog } from '../components/protocol-builder';
+import { SectionNav, ProtocolMetadataFormEnhanced, ExportManager, CloneProtocolDialog } from '../components/protocol-builder';
 import { ValidationStatusBar } from '../components/protocol-builder/ValidationStatusBar';
 import { ObjectivesEditor, EligibilityEditor, InterventionsEditor, IntroductionEditor, TrialDesignEditor, AssessmentsEditor, StatisticsEditor, ProtocolSummaryEditor, DiscontinuationEditor, AdverseEventsEditor, TrialOversightEditor, AppendicesEditor, GlossaryEditor, ReferencesEditor } from '../components/protocol-builder/sections';
 import { ValidationPanel } from '../components/validation/ValidationPanel';
+import { AIAssistantPanel, AISmartSuggestions } from '../components/ai';
 import { useValidation } from '../hooks/useValidation';
 import { KeyboardShortcuts, useKeyboardShortcuts, UserGuide } from '../components/common';
 import { useNotification } from '../hooks/useNotification';
@@ -137,7 +138,7 @@ const SectionContent: React.FC = () => {
 };
 
 const ProtocolBuilderContent: React.FC = () => {
-  const { protocol, loading, error } = useProtocol();
+  const { protocol, loading, error, saving, lastSaved, updateProtocol } = useProtocol();
   const [showValidation, setShowValidation] = useState(false);
   const [validationReport, setValidationReport] = useState<any>(null);
   const [validationLoading, setValidationLoading] = useState(false);
@@ -146,8 +147,14 @@ const ProtocolBuilderContent: React.FC = () => {
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [newProtocolName, setNewProtocolName] = useState('');
   const navigate = useNavigate();
   const notification = useNotification();
+  const { sectionNumber } = useRouteParams();
   
   // Validation hook
   const { validateProtocol } = useValidation();
@@ -158,9 +165,22 @@ const ProtocolBuilderContent: React.FC = () => {
       notification.info('Auto-save active - changes saved automatically');
     },
     onExport: () => setExportDialogOpen(true),
-    onNew: () => navigate('/protocols'),
+    onNew: () => navigate('/protocol-builder'),
     onHelp: () => setShortcutsOpen(true)
   });
+
+  // AI Assistant keyboard shortcut (Ctrl/Cmd + Shift + A)
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
+        e.preventDefault();
+        setAiAssistantOpen(true);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
 
   const handleValidate = async () => {
     if (!protocol?.id) return;
@@ -183,6 +203,65 @@ const ProtocolBuilderContent: React.FC = () => {
 
   const handleNavigateToSection = (sectionNumber: string) => {
     navigate(`section/${sectionNumber}`);
+  };
+
+  const handleDeleteProtocol = async () => {
+    if (!protocol?.id) return;
+
+    try {
+      const response = await fetch(`http://localhost:3001/api/protocols/${protocol.id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete protocol');
+      }
+
+      notification.success('Protocol deleted successfully');
+      navigate('/protocol-builder');
+    } catch (error) {
+      console.error('Failed to delete protocol:', error);
+      notification.error('Failed to delete protocol');
+    } finally {
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  const handleRenameProtocol = async () => {
+    if (!protocol?.id || !newProtocolName.trim()) return;
+
+    try {
+      const response = await fetch(`http://localhost:3001/api/protocols/${protocol.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shortTitle: newProtocolName.trim(),
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || 'Failed to rename protocol');
+      }
+
+      // Update protocol context
+      if (updateProtocol) {
+        updateProtocol({ shortTitle: newProtocolName.trim() });
+      }
+
+      notification.success('Protocol renamed successfully');
+      setRenameDialogOpen(false);
+      setNewProtocolName('');
+    } catch (error: any) {
+      console.error('Failed to rename protocol:', error);
+      notification.error(`Failed to rename protocol: ${error.message}`);
+      // Don't close dialog on error so user can try again
+    }
+  };
+
+  const handleOpenRenameDialog = () => {
+    setNewProtocolName(protocol?.shortTitle || protocol?.fullTitle || '');
+    setRenameDialogOpen(true);
   };
 
   if (loading) {
@@ -241,6 +320,56 @@ const ProtocolBuilderContent: React.FC = () => {
           <Box>
             {/* Header */}
             <HeaderCard>
+              {/* Breadcrumb Navigation */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <Tooltip title="Go to Home">
+                  <IconButton
+                    onClick={() => {
+                      console.log('Navigating to home');
+                      window.location.href = '/';
+                    }}
+                    size="small"
+                    sx={{
+                      color: colors.text.secondary,
+                      cursor: 'pointer',
+                      '&:hover': {
+                        color: colors.primary.main,
+                        backgroundColor: `${colors.primary.main}10`
+                      }
+                    }}
+                  >
+                    <HomeIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Typography variant="body2" color="text.secondary">/</Typography>
+                <Tooltip title="Back to My Protocols">
+                  <Button
+                    onClick={() => {
+                      console.log('Navigating to protocol builder');
+                      window.location.href = '/protocol-builder';
+                    }}
+                    startIcon={<BackIcon fontSize="small" />}
+                    size="small"
+                    sx={{
+                      color: colors.text.secondary,
+                      textTransform: 'none',
+                      minWidth: 'auto',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        color: colors.primary.main,
+                        backgroundColor: `${colors.primary.main}10`
+                      }
+                    }}
+                  >
+                    My Protocols
+                  </Button>
+                </Tooltip>
+                <Typography variant="body2" color="text.secondary">/</Typography>
+                <Typography variant="body2" color="primary" fontWeight={600}>
+                  {protocol.sponsorProtocolIdentifier}
+                </Typography>
+              </Box>
+
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box sx={{ flex: 1 }}>
                   <Typography 
@@ -272,6 +401,27 @@ const ProtocolBuilderContent: React.FC = () => {
                 </Box>
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                  {/* Auto-save Status */}
+                  {(saving || lastSaved) && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, py: 1, borderRadius: 2, backgroundColor: saving ? `${colors.primary.main}10` : `${colors.semantic.success}10` }}>
+                      {saving ? (
+                        <>
+                          <CircularProgress size={16} thickness={4} />
+                          <Typography variant="caption" color="primary" fontWeight={600}>
+                            Saving...
+                          </Typography>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle sx={{ fontSize: 16, color: colors.semantic.success }} />
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                            Saved {lastSaved?.toLocaleTimeString()}
+                          </Typography>
+                        </>
+                      )}
+                    </Box>
+                  )}
+
                   {/* Export Button */}
                   <Button
                     variant="outlined"
@@ -304,6 +454,40 @@ const ProtocolBuilderContent: React.FC = () => {
                     }}
                   >
                     Clone
+                  </Button>
+
+                  {/* Rename Button */}
+                  <Button
+                    variant="outlined"
+                    startIcon={<RenameIcon />}
+                    onClick={handleOpenRenameDialog}
+                    sx={{
+                      borderColor: colors.primary.main,
+                      color: colors.primary.main,
+                      '&:hover': {
+                        borderColor: colors.primary.dark,
+                        backgroundColor: `${colors.primary.main}10`
+                      }
+                    }}
+                  >
+                    Rename
+                  </Button>
+
+                  {/* Delete Button */}
+                  <Button
+                    variant="outlined"
+                    startIcon={<DeleteIcon />}
+                    onClick={() => setDeleteDialogOpen(true)}
+                    sx={{
+                      borderColor: colors.semantic.error,
+                      color: colors.semantic.error,
+                      '&:hover': {
+                        borderColor: colors.semantic.error,
+                        backgroundColor: `${colors.semantic.error}10`
+                      }
+                    }}
+                  >
+                    Delete
                   </Button>
 
                   {/* Circular Progress */}
@@ -391,7 +575,7 @@ const ProtocolBuilderContent: React.FC = () => {
               />
               
               <Routes>
-                <Route index element={<ProtocolMetadataForm />} />
+                <Route index element={<ProtocolMetadataFormEnhanced />} />
                 <Route path="section/:sectionNumber" element={<SectionContent />} />
                 <Route path="*" element={<Navigate to="" replace />} />
               </Routes>
@@ -444,6 +628,212 @@ const ProtocolBuilderContent: React.FC = () => {
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
       />
+
+      {/* AI Assistant Panel */}
+      <AIAssistantPanel
+        open={aiAssistantOpen}
+        onClose={() => setAiAssistantOpen(false)}
+        protocolId={protocol.id}
+        currentSection={sectionNumber}
+      />
+
+      {/* Smart Suggestions Sidebar - Temporarily Disabled */}
+      {/* TODO: Fix AISmartSuggestions component props mismatch */}
+      {false && showSuggestions && protocol.sections && (
+        <Box
+          sx={{
+            position: 'fixed',
+            right: showValidation ? 420 : 20,
+            top: 100,
+            width: 320,
+            maxHeight: 'calc(100vh - 120px)',
+            overflowY: 'auto',
+            zIndex: 999,
+            transition: 'right 0.3s ease'
+          }}
+        >
+          <AISmartSuggestions
+            protocolId={protocol.id}
+            currentSection={sectionNumber || 'metadata'}
+            completedSections={protocol.sections.filter((s: any) => s.isComplete).map((s: any) => s.sectionNumber)}
+            protocolContext={protocol}
+          />
+        </Box>
+      )}
+
+      {/* Floating AI Assistant Button */}
+      <Tooltip title="AI Assistant (Ctrl+Shift+A)" placement="left">
+        <Fab
+          color="primary"
+          aria-label="AI Assistant"
+          onClick={() => setAiAssistantOpen(true)}
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+            boxShadow: `0 8px 24px ${alpha(colors.primary.main, 0.4)}`,
+            '&:hover': {
+              background: `linear-gradient(135deg, ${colors.primary.dark} 0%, ${colors.secondary.dark} 100%)`,
+              boxShadow: `0 12px 32px ${alpha(colors.primary.main, 0.5)}`,
+              transform: 'scale(1.05)'
+            },
+            transition: 'all 0.3s ease',
+            zIndex: 1000
+          }}
+        >
+          <AIIcon sx={{ fontSize: 32 }} />
+        </Fab>
+      </Tooltip>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ 
+          fontWeight: 700,
+          color: colors.semantic.error,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <DeleteIcon />
+          Delete Protocol?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this protocol?
+          </DialogContentText>
+          {protocol && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: `${colors.semantic.error}10`, borderRadius: 2 }}>
+              <Typography variant="body2" fontWeight={600} gutterBottom>
+                {protocol.sponsorProtocolIdentifier}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {protocol.fullTitle}
+              </Typography>
+            </Box>
+          )}
+          <DialogContentText sx={{ mt: 2, color: colors.semantic.error, fontWeight: 600 }}>
+            This action cannot be undone. All protocol data, sections, objectives, and criteria will be permanently deleted.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+          <Button 
+            onClick={() => setDeleteDialogOpen(false)}
+            variant="outlined"
+            sx={{
+              borderColor: colors.text.secondary,
+              color: colors.text.secondary
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDeleteProtocol}
+            variant="contained"
+            color="error"
+            startIcon={<DeleteIcon />}
+            sx={{
+              background: colors.semantic.error,
+              '&:hover': {
+                background: colors.semantic.error,
+                filter: 'brightness(0.9)'
+              }
+            }}
+          >
+            Delete Protocol
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Rename Protocol Dialog */}
+      <Dialog
+        open={renameDialogOpen}
+        onClose={() => setRenameDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ 
+          fontWeight: 700,
+          color: colors.primary.main,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <RenameIcon />
+          Rename Protocol
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 3 }}>
+            Enter a new name for this protocol. This will update the short title displayed throughout the application.
+          </DialogContentText>
+          {protocol && (
+            <Box sx={{ mb: 3, p: 2, bgcolor: `${colors.primary.main}10`, borderRadius: 2 }}>
+              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                Current Name
+              </Typography>
+              <Typography variant="body2" fontWeight={600}>
+                {protocol.shortTitle || protocol.fullTitle}
+              </Typography>
+            </Box>
+          )}
+          <TextField
+            autoFocus
+            fullWidth
+            label="New Protocol Name"
+            value={newProtocolName}
+            onChange={(e) => setNewProtocolName(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && newProtocolName.trim()) {
+                handleRenameProtocol();
+              }
+            }}
+            placeholder="Enter new protocol name"
+            helperText="Press Enter to save"
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '&.Mui-focused fieldset': {
+                  borderColor: colors.primary.main,
+                },
+              },
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+          <Button 
+            onClick={() => setRenameDialogOpen(false)}
+            variant="outlined"
+            sx={{
+              borderColor: colors.text.secondary,
+              color: colors.text.secondary
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleRenameProtocol}
+            variant="contained"
+            disabled={!newProtocolName.trim()}
+            startIcon={<RenameIcon />}
+            sx={{
+              background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+              '&:hover': {
+                background: `linear-gradient(135deg, ${colors.primary.dark} 0%, ${colors.secondary.dark} 100%)`,
+              },
+              '&:disabled': {
+                background: colors.text.disabled,
+                color: '#fff'
+              }
+            }}
+          >
+            Rename
+          </Button>
+        </DialogActions>
+      </Dialog>
     </BuilderContainer>
   );
 };

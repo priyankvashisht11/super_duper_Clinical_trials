@@ -161,7 +161,19 @@ export const TrialOversightEditor: React.FC = () => {
           {/* Governance */}
           {activeTab === 0 && (
             <Box>
-              <Alert severity="info" sx={{ mb: 3 }}>
+              <Alert 
+                severity="info" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: '#e3f2fd',
+                  border: '2px solid #2196f3',
+                  '& .MuiAlert-icon': { color: '#1976d2' },
+                  '& .MuiAlert-message': { 
+                    color: '#0d47a1',
+                    '& .MuiTypography-root': { color: '#0d47a1', fontWeight: 600 }
+                  }
+                }}
+              >
                 <Typography variant="body2" fontWeight={600} gutterBottom>
                   Section 11.1: Trial Governance Structure
                 </Typography>
@@ -184,7 +196,20 @@ export const TrialOversightEditor: React.FC = () => {
           {/* Monitoring */}
           {activeTab === 1 && (
             <Box>
-              <Alert severity="warning" sx={{ mb: 3 }}>
+              <Alert 
+                severity="warning" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: '#fff3e0',
+                  border: '2px solid #ff9800',
+                  '& .MuiAlert-icon': { color: '#f57c00' },
+                  '& .MuiAlert-message': { 
+                    color: '#e65100',
+                    fontWeight: 600,
+                    '& .MuiTypography-root': { color: '#e65100', fontWeight: 600 }
+                  }
+                }}
+              >
                 <Typography variant="body2" fontWeight={600} gutterBottom>
                   Section 11.2: Monitoring Plan and Procedures
                 </Typography>
@@ -282,7 +307,19 @@ export const TrialOversightEditor: React.FC = () => {
           {/* Committees */}
           {activeTab === 2 && (
             <Box>
-              <Alert severity="info" sx={{ mb: 3 }}>
+              <Alert 
+                severity="info" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: '#e3f2fd',
+                  border: '2px solid #2196f3',
+                  '& .MuiAlert-icon': { color: '#1976d2' },
+                  '& .MuiAlert-message': { 
+                    color: '#0d47a1',
+                    '& .MuiTypography-root': { color: '#0d47a1', fontWeight: 600 }
+                  }
+                }}
+              >
                 <Typography variant="body2" fontWeight={600} gutterBottom>
                   Section 11.3: Oversight Committees
                 </Typography>
@@ -360,7 +397,20 @@ export const TrialOversightEditor: React.FC = () => {
           {/* Audits */}
           {activeTab === 3 && (
             <Box>
-              <Alert severity="warning" sx={{ mb: 3 }}>
+              <Alert 
+                severity="warning" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: '#fff3e0',
+                  border: '2px solid #ff9800',
+                  '& .MuiAlert-icon': { color: '#f57c00' },
+                  '& .MuiAlert-message': { 
+                    color: '#e65100',
+                    fontWeight: 600,
+                    '& .MuiTypography-root': { color: '#e65100', fontWeight: 600 }
+                  }
+                }}
+              >
                 <Typography variant="body2" fontWeight={600} gutterBottom>
                   Section 11.4: Quality Assurance and Audits
                 </Typography>

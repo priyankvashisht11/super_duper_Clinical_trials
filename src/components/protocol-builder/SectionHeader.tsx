@@ -84,9 +84,9 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
     return <InfoIcon />;
   };
 
-  const getProgressColor = () => {
+  const getProgressColor = (): 'primary' | 'success' | 'warning' | 'error' => {
     if (!validationStatus) return 'primary';
-    const score = validationStatus.completionScore;
+    const score = validationStatus.completionScore || 0;
     if (score >= 90) return 'success';
     if (score >= 70) return 'primary';
     if (score >= 40) return 'warning';
@@ -161,7 +161,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
               <Box sx={{ flex: 1 }}>
                 <LinearProgress
                   variant="determinate"
-                  value={validationStatus.completionScore}
+                  value={validationStatus.completionScore || 0}
                   color={getProgressColor()}
                   sx={{
                     height: 6,
@@ -171,7 +171,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
                 />
               </Box>
               <Typography variant="body2" fontWeight={700} sx={{ minWidth: 60 }}>
-                {validationStatus.completionScore}%
+                {validationStatus.completionScore || 0}%
               </Typography>
             </Box>
             

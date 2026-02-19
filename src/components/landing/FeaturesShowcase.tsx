@@ -64,17 +64,25 @@ const SectionSubtitle = styled(Typography)(({ theme }) => ({
   color: colors.text.secondary,
   textAlign: 'center',
   marginBottom: theme.spacing(6),
-  maxWidth: 600,
-  margin: `0 auto ${theme.spacing(6)}px`,
+  maxWidth: 900,
+  marginLeft: 'auto',
+  marginRight: 'auto',
+  lineHeight: 1.8,
+  paddingLeft: theme.spacing(2),
+  paddingRight: theme.spacing(2),
+  display: 'block',
   
   [theme.breakpoints.down('sm')]: {
     fontSize: '1rem',
     marginBottom: theme.spacing(4),
+    maxWidth: '100%',
   },
 }));
 
 const FeatureCard = styled(Card)(({ theme }) => ({
   height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
   borderRadius: 16,
   border: `1px solid ${alpha(colors.primary.main, 0.1)}`,
   transition: 'all 0.3s ease-in-out',
@@ -391,8 +399,7 @@ export const FeaturesShowcase: React.FC<FeaturesShowcaseProps> = ({
             Powerful Features for Medical Professionals
           </SectionTitle>
           <SectionSubtitle>
-            Discover how our AI-powered platform transforms clinical research workflows 
-            with cutting-edge technology designed specifically for Indian healthcare.
+            Discover how our AI-powered platform transforms clinical research workflows with cutting-edge technology designed specifically for Indian healthcare.
           </SectionSubtitle>
         </Box>
       </Fade>
@@ -417,38 +424,59 @@ export const FeaturesShowcase: React.FC<FeaturesShowcaseProps> = ({
               >
                 <div data-feature-id={feature.id}>
                   <FeatureCard onClick={() => handleFeatureClick(feature)}>
-                    <CardContent sx={{ p: 3 }}>
+                    <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                       <FeatureIcon>
                         <IconComponent />
                       </FeatureIcon>
                       
-                      <Typography variant="h5" component="h3" sx={{ mb: 2, fontWeight: 600 }}>
+                      <Typography 
+                        variant="h5" 
+                        component="h3" 
+                        sx={{ 
+                          mb: 2, 
+                          fontWeight: 600,
+                          fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                          lineHeight: 1.3,
+                        }}
+                      >
                         {feature.title}
                       </Typography>
                       
-                      <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+                      <Typography 
+                        variant="body1" 
+                        color="text.secondary" 
+                        sx={{ 
+                          mb: 3, 
+                          lineHeight: 1.6,
+                          fontSize: { xs: '0.875rem', sm: '1rem' },
+                        }}
+                      >
                         {feature.description}
                       </Typography>
                       
-                      <Box sx={{ mb: 2 }}>
+                      <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                         {feature.benefits.map((benefit, idx) => (
                           <Chip
                             key={idx}
                             label={benefit}
                             size="small"
                             sx={{
-                              mr: 1,
-                              mb: 1,
                               backgroundColor: alpha(colors.primary.main, 0.1),
                               color: colors.primary.dark,
                               fontSize: '0.75rem',
+                              height: 'auto',
+                              '& .MuiChip-label': {
+                                whiteSpace: 'normal',
+                                padding: '4px 8px',
+                                lineHeight: 1.4,
+                              },
                             }}
                           />
                         ))}
                       </Box>
                     </CardContent>
                     
-                    <CardActions sx={{ px: 3, pb: 3 }}>
+                    <CardActions sx={{ px: 3, pb: 3, pt: 0 }}>
                       <Button
                         variant="outlined"
                         startIcon={<PlayIcon />}

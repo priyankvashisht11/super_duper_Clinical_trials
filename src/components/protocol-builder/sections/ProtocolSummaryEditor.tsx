@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Card, CardContent, Typography, Alert, Grid, Chip,
+  Box, Card, CardContent, Typography, Alert, Chip,
   Divider, Button
 } from '@mui/material';
 import {
@@ -107,10 +107,33 @@ export const ProtocolSummaryEditor: React.FC = () => {
         />
       )}
 
-      <Alert severity="info" sx={{ mb: 3 }}>
-        <Typography variant="body2">
-          This section is automatically generated from data entered in other sections.
-          Complete other sections to see the summary populate.
+      <Alert 
+        severity="info" 
+        icon={<DashboardIcon sx={{ fontSize: 40 }} />}
+        sx={{ 
+          mb: 3,
+          backgroundColor: '#e3f2fd',
+          border: `3px solid #2196f3`,
+          borderRadius: 3,
+          padding: 3,
+          boxShadow: '0 4px 12px rgba(33, 150, 243, 0.2)',
+          '& .MuiAlert-icon': {
+            color: '#1976d2',
+            fontSize: 40,
+            marginRight: 2
+          },
+          '& .MuiAlert-message': {
+            width: '100%'
+          }
+        }}
+      >
+        <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: '#0d47a1' }}>
+          📊 Auto-Generated Summary Section
+        </Typography>
+        <Typography variant="body1" sx={{ lineHeight: 1.8, color: '#1565c0', fontSize: '1rem' }}>
+          This section is <strong style={{ color: '#0d47a1' }}>automatically generated</strong> from data you enter in other sections.
+          <br />
+          <strong>Complete sections 2-14</strong> to see your protocol summary populate here.
         </Typography>
       </Alert>
 
@@ -130,52 +153,56 @@ export const ProtocolSummaryEditor: React.FC = () => {
           </Box>
 
           {/* Basic Information */}
-          <Grid container spacing={3} mb={3}>
-            <Grid item xs={12}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 3, mb: 3 }}>
+            <Box>
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                 Protocol Title
               </Typography>
               <Typography variant="body1" fontWeight={600}>
                 {summary.title || 'Not set'}
               </Typography>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Sponsor Protocol Identifier
-              </Typography>
-              <Typography variant="body1" fontWeight={600}>
-                {summary.sponsor || 'Not set'}
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Indication
-              </Typography>
-              <Typography variant="body1" fontWeight={600}>
-                {summary.indication || 'Not set'}
-              </Typography>
-            </Grid>
-            <Grid item xs={6} md={3}>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Phase
-              </Typography>
-              <Chip
-                label={summary.phase || 'Not set'}
-                color="primary"
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={6} md={3}>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Study Type
-              </Typography>
-              <Chip
-                label={summary.studyType || 'Not set'}
-                color="secondary"
-                size="small"
-              />
-            </Grid>
-          </Grid>
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Sponsor Protocol Identifier
+                </Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {summary.sponsor || 'Not set'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Indication
+                </Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {summary.indication || 'Not set'}
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 3 }}>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Phase
+                </Typography>
+                <Chip
+                  label={summary.phase || 'Not set'}
+                  color="primary"
+                  size="small"
+                />
+              </Box>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Study Type
+                </Typography>
+                <Chip
+                  label={summary.studyType || 'Not set'}
+                  color="secondary"
+                  size="small"
+                />
+              </Box>
+            </Box>
+          </Box>
 
           <Divider sx={{ my: 3 }} />
 
@@ -183,51 +210,43 @@ export const ProtocolSummaryEditor: React.FC = () => {
           <Typography variant="h6" fontWeight={700} gutterBottom>
             Protocol Content
           </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={6} md={3}>
-              <Card variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight={700} color="primary">
-                  {summary.objectivesCount}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Total Objectives
-                </Typography>
-                <Typography variant="caption" display="block" color="primary">
-                  ({summary.primaryObjectives} primary)
-                </Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={6} md={3}>
-              <Card variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight={700} color="success.main">
-                  {summary.inclusionCount}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Inclusion Criteria
-                </Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={6} md={3}>
-              <Card variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight={700} color="error.main">
-                  {summary.exclusionCount}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Exclusion Criteria
-                </Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={6} md={3}>
-              <Card variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-                <Typography variant="h4" fontWeight={700} color="secondary.main">
-                  {summary.interventionsCount}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Interventions
-                </Typography>
-              </Card>
-            </Grid>
-          </Grid>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2 }}>
+            <Card variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="h4" fontWeight={700} color="primary">
+                {summary.objectivesCount}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Total Objectives
+              </Typography>
+              <Typography variant="caption" display="block" color="primary">
+                ({summary.primaryObjectives} primary)
+              </Typography>
+            </Card>
+            <Card variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="h4" fontWeight={700} color="success.main">
+                {summary.inclusionCount}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Inclusion Criteria
+              </Typography>
+            </Card>
+            <Card variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="h4" fontWeight={700} color="error.main">
+                {summary.exclusionCount}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Exclusion Criteria
+              </Typography>
+            </Card>
+            <Card variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="h4" fontWeight={700} color="secondary.main">
+                {summary.interventionsCount}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Interventions
+              </Typography>
+            </Card>
+          </Box>
 
           <Divider sx={{ my: 3 }} />
 

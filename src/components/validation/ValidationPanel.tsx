@@ -40,24 +40,32 @@ const PanelHeader = styled(Box)(() => ({
 
 const ValidateButton = styled(Button)(() => ({
   borderRadius: 12,
-  padding: '12px 32px',
-  fontWeight: 600,
-  fontSize: '0.875rem',
-  background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
-  boxShadow: `0 4px 12px ${alpha(colors.primary.main, 0.3)}`,
+  padding: '14px 32px',
+  fontWeight: 700,
+  fontSize: '1rem',
+  background: '#ffffff',
+  border: `3px solid ${colors.primary.main}`,
+  color: colors.primary.main,
+  boxShadow: `0 4px 16px ${alpha(colors.primary.main, 0.3)}`,
   textTransform: 'none',
   
   '&:hover': {
-    background: `linear-gradient(135deg, ${colors.primary.dark} 0%, ${colors.secondary.dark} 100%)`,
-    boxShadow: `0 6px 16px ${alpha(colors.primary.main, 0.4)}`,
+    background: colors.primary.main,
+    color: '#ffffff',
+    borderColor: colors.primary.dark,
+    boxShadow: `0 6px 20px ${alpha(colors.primary.main, 0.4)}`,
     transform: 'translateY(-2px)',
   },
   
   '&:disabled': {
     background: colors.text.disabled,
-    boxShadow: 'none',
+    borderColor: colors.text.disabled,
+    color: '#ffffff',
+    opacity: 0.6,
     transform: 'none',
   },
+  
+  transition: 'all 0.2s ease',
 }));
 
 const StatsCard = styled(Card)(() => ({
@@ -151,10 +159,10 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({
         <ValidateButton
           onClick={onValidate}
           disabled={loading}
-          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />}
+          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <CheckCircle />}
           fullWidth
         >
-          {loading ? 'Validating...' : 'Validate Now'}
+          {loading ? 'Validating Protocol...' : 'Validate Now'}
         </ValidateButton>
 
         {/* Status Summary */}
@@ -219,7 +227,26 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({
           </StyledTabs>
 
           {/* Tab Content */}
-          <Box sx={{ p: 3, flex: 1, overflow: 'auto' }}>
+          <Box sx={{ 
+            p: 3, 
+            flex: 1, 
+            overflow: 'auto',
+            backgroundColor: '#ffffff',
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: alpha(colors.primary.main, 0.05),
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: alpha(colors.primary.main, 0.3),
+              borderRadius: '4px',
+              '&:hover': {
+                background: alpha(colors.primary.main, 0.5),
+              },
+            },
+          }}>
             {activeTab === 'overview' && (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 {/* Stats Grid */}
@@ -313,7 +340,10 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({
             )}
 
             {activeTab === 'issues' && (
-              <Box>
+              <Box sx={{ 
+                maxHeight: '100%',
+                overflow: 'visible',
+              }}>
                 <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
                   All Validation Issues ({report?.issues?.length || 0})
                 </Typography>
@@ -332,7 +362,12 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({
                     </Typography>
                   </SuccessState>
                 ) : (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: 2,
+                    pb: 2,
+                  }}>
                     {report.issues.map((issue, index) => (
                       <ValidationIssueCard
                         key={index}

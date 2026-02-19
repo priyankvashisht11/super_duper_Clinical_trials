@@ -1,356 +1,368 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
+  Drawer,
   Box,
-  Card,
-  CardContent,
   Typography,
   TextField,
-  Button,
-  Chip,
-  Divider,
+  IconButton,
+  Paper,
   CircularProgress,
   Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  IconButton,
+  Divider,
   Tooltip,
+  Button,
+  alpha
 } from '@mui/material';
 import {
-  Psychology as AIIcon,
-  ExpandMore as ExpandMoreIcon,
-  Send as SendIcon,
-  Lightbulb as LightbulbIcon,
-  Link as LinkIcon,
-  AutoFixHigh as AutoFixIcon,
-  Search as SearchIcon,
   Close as CloseIcon,
+  Send as SendIcon,
+  SmartToy as AIIcon,
+  ContentCopy as CopyIcon,
+  Delete as DeleteIcon,
+  DragIndicator as DragIcon
 } from '@mui/icons-material';
-import { colors } from '../../styles/theme';
 import { aiService } from '../../services/aiService';
-import type { AIAssistanceResponse } from '../../services/aiService';
-import { useNotification } from '../../hooks/useNotification';
+import { colors } from '../../styles/theme';
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
 
 interface AIAssistantPanelProps {
-  sectionName: string;
-  currentContent: any;
-  protocolContext?: any;
-  onContentSuggestion?: (content: string) => void;
-  onClose?: () => void;
+  open: boolean;
+  onClose: () => void;
+  protocolId?: string;
+  currentSection?: string;
 }
 
 export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
-  sectionName,
-  currentContent,
-  protocolContext,
-  onContentSuggestion,
+  open,
   onClose,
+  protocolId,
+  currentSection
 }) => {
-  const [query, setQuery] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState<AIAssistanceResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const notification = useNotification();
+  const [drawerWidth, setDrawerWidth] = useState(500);
+  const [isResizing, setIsResizing] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
-  const handleAskAI = async () => {
-    if (!query.trim()) {
-      notification.warning('Please enter a question or request');
-      return;
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Handle resizing
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      
+      const newWidth = window.innerWidth - e.clientX;
+      if (newWidth >= 300 && newWidth <= 800) {
+        setDrawerWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
     }
 
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
+
+  const handleSend = async () => {
+    if (!input.trim() || loading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
     setLoading(true);
     setError(null);
 
     try {
-      const result = await aiService.getSectionAssistance(
-        sectionName,
-        currentContent,
-        query,
-        protocolContext
+      const context = currentSection 
+        ? `Currently working on Section ${currentSection} of protocol ${protocolId}`
+        : protocolId 
+        ? `Working on protocol ${protocolId}`
+        : undefined;
+
+      const response = await aiService.getSectionAssistance(
+        currentSection || 'general',
+        {},
+        input,
+        { protocolId, context }
       );
-      setResponse(result);
-      notification.success('AI assistance received!');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to get AI assistance';
-      setError(errorMessage);
-      notification.error(errorMessage);
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response.content,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (err: any) {
+      setError(err.message || 'Failed to get AI response');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApplySuggestion = (suggestion: string) => {
-    if (onContentSuggestion) {
-      onContentSuggestion(suggestion);
-      notification.success('Suggestion applied!');
+  const handleCopy = (content: string) => {
+    navigator.clipboard.writeText(content);
+  };
+
+  const handleClear = () => {
+    if (confirm('Clear conversation history?')) {
+      setMessages([]);
     }
   };
 
-  const quickPrompts = [
-    'Help me improve this section',
-    'What are the regulatory requirements?',
-    'Suggest best practices',
-    'Check for completeness',
-    'Provide examples',
-    'Review for compliance',
-  ];
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
   return (
-    <Card
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
       sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        background: `linear-gradient(135deg, ${colors.primary.light}10 0%, ${colors.secondary.light}10 100%)`,
-        border: `1px solid ${colors.primary.light}30`,
+        '& .MuiDrawer-paper': {
+          width: drawerWidth,
+          background: `linear-gradient(135deg, ${colors.background.paper} 0%, ${alpha(colors.primary.light, 0.05)} 100%)`,
+          transition: isResizing ? 'none' : 'width 0.3s ease'
+        }
+      }}
+      PaperProps={{
+        ref: drawerRef
       }}
     >
-      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 3 }}>
-        {/* Header */}
-        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-          <Box display="flex" alignItems="center" gap={1}>
-            <AIIcon sx={{ color: colors.primary.main, fontSize: 28 }} />
+      {/* Resize Handle */}
+      <Box
+        onMouseDown={() => setIsResizing(true)}
+        sx={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 8,
+          cursor: 'ew-resize',
+          backgroundColor: 'transparent',
+          '&:hover': {
+            backgroundColor: alpha(colors.primary.main, 0.1)
+          },
+          zIndex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <DragIcon sx={{ fontSize: 16, color: colors.text.disabled, opacity: 0.5 }} />
+      </Box>
+
+      {/* Header */}
+      <Box
+        sx={{
+          p: 2,
+          background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}
+      >
+        <Box display="flex" alignItems="center" gap={1}>
+          <AIIcon fontSize="large" />
+          <Box>
             <Typography variant="h6" fontWeight={700}>
               AI Assistant
             </Typography>
-            <Chip
-              label={sectionName}
-              size="small"
-              sx={{
-                background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
-                color: 'white',
-                fontWeight: 600,
-              }}
-            />
+            <Typography variant="caption">
+              Ask anything about clinical trial protocols
+            </Typography>
           </Box>
-          {onClose && (
-            <IconButton onClick={onClose} size="small">
+        </Box>
+        <Box>
+          {messages.length > 0 && (
+            <Tooltip title="Clear conversation">
+              <IconButton onClick={handleClear} sx={{ color: 'white', mr: 1 }}>
+                <DeleteIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title="Close">
+            <IconButton onClick={onClose} sx={{ color: 'white' }}>
               <CloseIcon />
             </IconButton>
-          )}
+          </Tooltip>
         </Box>
+      </Box>
 
-        {/* Quick Prompts */}
-        <Box mb={3}>
-          <Typography variant="subtitle2" fontWeight={600} mb={1} color="text.secondary">
-            Quick Actions:
-          </Typography>
-          <Box display="flex" flexWrap="wrap" gap={1}>
-            {quickPrompts.map((prompt, index) => (
-              <Chip
-                key={index}
-                label={prompt}
-                size="small"
-                onClick={() => setQuery(prompt)}
-                sx={{
-                  cursor: 'pointer',
-                  '&:hover': {
-                    background: colors.primary.light + '20',
-                  },
-                }}
-              />
-            ))}
-          </Box>
-        </Box>
-
-        {/* Query Input */}
-        <Box mb={2}>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            placeholder="Ask me anything about this section... For example: 'Help me write inclusion criteria for a Phase 2 oncology trial' or 'What regulatory requirements should I consider?'"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && e.ctrlKey) {
-                handleAskAI();
-              }
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                background: 'white',
-              },
-            }}
-          />
-          <Box display="flex" justifyContent="space-between" alignItems="center" mt={1}>
-            <Typography variant="caption" color="text.secondary">
-              Press Ctrl+Enter to send
+      {/* Messages */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: 'auto',
+          p: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2
+        }}
+      >
+        {messages.length === 0 && (
+          <Box textAlign="center" py={8}>
+            <AIIcon sx={{ fontSize: 80, color: colors.primary.light, mb: 2 }} />
+            <Typography variant="h6" fontWeight={700} gutterBottom>
+              Welcome to AI Assistant
             </Typography>
-            <Button
-              variant="contained"
-              startIcon={loading ? <CircularProgress size={16} /> : <SendIcon />}
-              onClick={handleAskAI}
-              disabled={loading || !query.trim()}
+            <Typography variant="body2" color="text.secondary" mb={3}>
+              Ask questions about ICH M11, protocol requirements, or get help with section content.
+            </Typography>
+            <Box display="flex" flexDirection="column" gap={1} maxWidth={400} mx="auto">
+              {[
+                'What is required in Section 3?',
+                'How should I structure trial objectives?',
+                'What are ICH M11 requirements for eligibility criteria?'
+              ].map((example, idx) => (
+                <Button
+                  key={idx}
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setInput(example)}
+                  sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
+                >
+                  {example}
+                </Button>
+              ))}
+            </Box>
+          </Box>
+        )}
+
+        {messages.map((message) => (
+          <Box
+            key={message.id}
+            sx={{
+              display: 'flex',
+              justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start'
+            }}
+          >
+            <Paper
               sx={{
-                background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
-                minWidth: 100,
+                p: 2,
+                maxWidth: '85%',
+                background: message.role === 'user'
+                  ? `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`
+                  : colors.background.paper,
+                color: message.role === 'user' ? 'white' : 'text.primary',
+                borderRadius: 2,
+                position: 'relative'
               }}
             >
-              {loading ? 'Thinking...' : 'Ask AI'}
-            </Button>
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                {message.content}
+              </Typography>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mt={1}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: message.role === 'user' ? 'rgba(255,255,255,0.7)' : 'text.secondary'
+                  }}
+                >
+                  {message.timestamp.toLocaleTimeString()}
+                </Typography>
+                {message.role === 'assistant' && (
+                  <IconButton
+                    size="small"
+                    onClick={() => handleCopy(message.content)}
+                    sx={{ ml: 1 }}
+                  >
+                    <CopyIcon fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
+            </Paper>
           </Box>
-        </Box>
+        ))}
 
-        {/* Error Display */}
+        {loading && (
+          <Box display="flex" alignItems="center" gap={1}>
+            <CircularProgress size={20} />
+            <Typography variant="body2" color="text.secondary">
+              AI is thinking...
+            </Typography>
+          </Box>
+        )}
+
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" onClose={() => setError(null)}>
             {error}
           </Alert>
         )}
 
-        {/* AI Response */}
-        {response && (
-          <Box flex={1} sx={{ overflowY: 'auto' }}>
-            {/* Main Response */}
-            <Accordion defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Box display="flex" alignItems="center" gap={1}>
-                  <LightbulbIcon sx={{ color: colors.semantic.warning }} />
-                  <Typography variant="subtitle1" fontWeight={600}>
-                    AI Response
-                  </Typography>
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    whiteSpace: 'pre-wrap',
-                    lineHeight: 1.6,
-                    background: 'white',
-                    p: 2,
-                    borderRadius: 1,
-                    border: `1px solid ${colors.primary.light}20`,
-                  }}
-                >
-                  {response.content}
-                </Typography>
-                {onContentSuggestion && (
-                  <Button
-                    startIcon={<AutoFixIcon />}
-                    onClick={() => handleApplySuggestion(response.content)}
-                    sx={{ mt: 2 }}
-                  >
-                    Apply to Section
-                  </Button>
-                )}
-              </AccordionDetails>
-            </Accordion>
+        <div ref={messagesEndRef} />
+      </Box>
 
-            {/* Suggestions */}
-            {response.suggestions && response.suggestions.length > 0 && (
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <SearchIcon sx={{ color: colors.primary.main }} />
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      Related Questions ({response.suggestions.length})
-                    </Typography>
-                  </Box>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <List dense>
-                    {response.suggestions.map((suggestion, index) => (
-                      <ListItem
-                        key={index}
-                        button
-                        onClick={() => setQuery(suggestion)}
-                        sx={{
-                          borderRadius: 1,
-                          mb: 0.5,
-                          '&:hover': {
-                            background: colors.primary.light + '10',
-                          },
-                        }}
-                      >
-                        <ListItemIcon>
-                          <LightbulbIcon sx={{ fontSize: 16, color: colors.semantic.info }} />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={suggestion}
-                          primaryTypographyProps={{
-                            variant: 'body2',
-                            sx: { cursor: 'pointer' },
-                          }}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                </AccordionDetails>
-              </Accordion>
-            )}
+      <Divider />
 
-            {/* Citations */}
-            {response.citations && response.citations.length > 0 && (
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <LinkIcon sx={{ color: colors.semantic.success }} />
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      References ({response.citations.length})
-                    </Typography>
-                  </Box>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <List dense>
-                    {response.citations.map((citation, index) => (
-                      <ListItem key={index}>
-                        <ListItemIcon>
-                          <LinkIcon sx={{ fontSize: 16, color: colors.semantic.success }} />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={citation}
-                          primaryTypographyProps={{
-                            variant: 'body2',
-                            component: 'a',
-                            href: citation.startsWith('http') ? citation : `https://www.google.com/search?q=${encodeURIComponent(citation)}`,
-                            target: '_blank',
-                            rel: 'noopener noreferrer',
-                            sx: {
-                              color: colors.primary.main,
-                              textDecoration: 'none',
-                              '&:hover': {
-                                textDecoration: 'underline',
-                              },
-                            },
-                          }}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                </AccordionDetails>
-              </Accordion>
-            )}
-          </Box>
-        )}
-
-        {/* Empty State */}
-        {!response && !loading && (
-          <Box
-            flex={1}
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-            textAlign="center"
-            color="text.secondary"
+      {/* Input */}
+      <Box sx={{ p: 2, backgroundColor: colors.background.paper }}>
+        <Box display="flex" gap={1}>
+          <TextField
+            fullWidth
+            multiline
+            maxRows={4}
+            placeholder="Ask a question about clinical trial protocols..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            disabled={loading}
+          />
+          <IconButton
+            onClick={handleSend}
+            disabled={!input.trim() || loading}
+            sx={{
+              background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+              color: 'white',
+              '&:hover': {
+                opacity: 0.9
+              },
+              '&:disabled': {
+                background: colors.background.default,
+                color: colors.text.disabled
+              }
+            }}
           >
-            <AIIcon sx={{ fontSize: 64, mb: 2, opacity: 0.3 }} />
-            <Typography variant="h6" gutterBottom>
-              AI Assistant Ready
-            </Typography>
-            <Typography variant="body2" sx={{ maxWidth: 300 }}>
-              Ask me anything about the {sectionName} section. I can help with content generation, 
-              regulatory guidance, best practices, and more.
-            </Typography>
-          </Box>
-        )}
-      </CardContent>
-    </Card>
+            <SendIcon />
+          </IconButton>
+        </Box>
+      </Box>
+    </Drawer>
   );
 };

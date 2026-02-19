@@ -147,7 +147,20 @@ export const DiscontinuationEditor: React.FC = () => {
           {/* Withdrawal Criteria */}
           {activeTab === 0 && (
             <Box>
-              <Alert severity="warning" sx={{ mb: 3 }}>
+              <Alert 
+                severity="warning" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: '#fff3e0',
+                  border: '2px solid #ff9800',
+                  '& .MuiAlert-icon': { color: '#f57c00' },
+                  '& .MuiAlert-message': { 
+                    color: '#e65100',
+                    fontWeight: 600,
+                    '& .MuiTypography-root': { color: '#e65100', fontWeight: 600 }
+                  }
+                }}
+              >
                 <Typography variant="body2" fontWeight={600} gutterBottom>
                   Section 7.1: Criteria for Withdrawal
                 </Typography>
@@ -169,7 +182,19 @@ export const DiscontinuationEditor: React.FC = () => {
           {/* Discontinuation Procedures */}
           {activeTab === 1 && (
             <Box>
-              <Alert severity="info" sx={{ mb: 3 }}>
+              <Alert 
+                severity="info" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: '#e3f2fd',
+                  border: '2px solid #2196f3',
+                  '& .MuiAlert-icon': { color: '#1976d2' },
+                  '& .MuiAlert-message': { 
+                    color: '#0d47a1',
+                    '& .MuiTypography-root': { color: '#0d47a1', fontWeight: 600 }
+                  }
+                }}
+              >
                 <Typography variant="body2" fontWeight={600} gutterBottom>
                   Section 7.2: Discontinuation Procedures
                 </Typography>
@@ -191,7 +216,20 @@ export const DiscontinuationEditor: React.FC = () => {
           {/* Lost to Follow-up */}
           {activeTab === 2 && (
             <Box>
-              <Alert severity="warning" sx={{ mb: 3 }}>
+              <Alert 
+                severity="warning" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: '#fff3e0',
+                  border: '2px solid #ff9800',
+                  '& .MuiAlert-icon': { color: '#f57c00' },
+                  '& .MuiAlert-message': { 
+                    color: '#e65100',
+                    fontWeight: 600,
+                    '& .MuiTypography-root': { color: '#e65100', fontWeight: 600 }
+                  }
+                }}
+              >
                 <Typography variant="body2" fontWeight={600} gutterBottom>
                   Section 7.3: Lost to Follow-up
                 </Typography>

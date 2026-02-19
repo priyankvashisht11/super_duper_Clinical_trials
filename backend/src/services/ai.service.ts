@@ -89,37 +89,58 @@ export class AIService {
     context?: any
   ): Promise<{ content: string; suggestions: string[]; citations?: string[] }> {
     const systemPrompt = `You are an expert clinical research AI assistant specializing in ICH M11 protocol development. 
-    You help researchers create high-quality, regulatory-compliant clinical trial protocols.
+    You help researchers create high-quality, regulatory-compliant clinical trial protocols for ANY disease or medical condition.
     
     Current section: ${sectionName}
     
-    Provide specific, actionable guidance that follows ICH M11 guidelines and current regulatory standards.
-    Focus on practical, implementable suggestions that improve protocol quality.
-    Always consider regulatory compliance, scientific rigor, and patient safety.`;
+    CRITICAL RULES:
+    1. NEVER use placeholder diseases or hardcoded examples unless explicitly mentioned in the user's context
+    2. ALWAYS analyze the user's protocol context to understand their specific disease/condition
+    3. If the user mentions a disease anywhere in their protocol, use that disease in your suggestions
+    4. Provide specific, actionable guidance that follows ICH M11 guidelines
+    5. Focus on practical, implementable suggestions that improve protocol quality
+    6. Always consider regulatory compliance, scientific rigor, and patient safety
+    7. Be concise - provide only what was asked for, no extra explanations
+    8. For indication fields: respond with ONLY the indication text, nothing else
+    9. For title fields: respond with ONLY the complete title, nothing else
+    
+    Your suggestions must be universally applicable to ANY therapeutic area:
+    - Oncology (all cancer types)
+    - Cardiology (heart diseases)
+    - Neurology (brain/nervous system)
+    - Endocrinology (diabetes, thyroid, etc.)
+    - Immunology (autoimmune diseases)
+    - Infectious diseases (viral, bacterial, fungal)
+    - Rare diseases
+    - Genetic disorders
+    - And ANY other medical condition`;
 
     const userPrompt = `Section: ${sectionName}
     Current content: ${JSON.stringify(currentContent, null, 2)}
-    Context: ${JSON.stringify(context, null, 2)}
+    Full protocol context: ${JSON.stringify(context, null, 2)}
     
-    User question/request: ${userQuery}
+    User request: ${userQuery}
     
-    Please provide:
-    1. Direct answer to the user's question
-    2. Specific suggestions for improving this section
-    3. Regulatory compliance considerations
-    4. Best practices and examples`;
+    ANALYZE THE CONTEXT CAREFULLY:
+    - Look for any disease/condition mentions in the protocol context
+    - Check the trial phase to understand study objectives
+    - Consider the study type and design
+    - Use the ACTUAL disease mentioned, not generic examples
+    
+    Provide your response following the user's specific request.
+    Be concise and specific. Do not add explanations unless asked.`;
 
     const response = await this.makeRequest({
-      model: 'sonar',
+      model: 'sonar-pro',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      max_tokens: 2000,
-      temperature: 0.3,
+      max_tokens: 1000,
+      temperature: 0.2,
       return_citations: true,
-      return_related_questions: true,
-      search_domain_filter: ['clinicaltrials.gov', 'fda.gov', 'ema.europa.eu', 'ich.org']
+      return_related_questions: false,
+      search_domain_filter: ['clinicaltrials.gov', 'fda.gov', 'ema.europa.eu', 'ich.org', 'who.int', 'nih.gov']
     });
 
     const content = response.choices[0]?.message?.content || '';

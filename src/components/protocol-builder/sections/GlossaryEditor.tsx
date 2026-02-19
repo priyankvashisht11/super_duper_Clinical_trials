@@ -230,7 +230,19 @@ export const GlossaryEditor: React.FC = () => {
           </Box>
 
           {terms.length === 0 ? (
-            <Alert severity="info" sx={{ mb: 3 }}>
+            <Alert 
+              severity="info" 
+              sx={{ 
+                mb: 3,
+                backgroundColor: '#e3f2fd',
+                border: '2px solid #2196f3',
+                '& .MuiAlert-icon': { color: '#1976d2' },
+                '& .MuiAlert-message': { 
+                  color: '#0d47a1',
+                  '& .MuiTypography-root': { color: '#0d47a1', fontWeight: 600 }
+                }
+              }}
+            >
               <Typography variant="body2" fontWeight={600} gutterBottom>
                 No terms defined yet
               </Typography>

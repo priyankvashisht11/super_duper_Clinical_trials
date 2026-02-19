@@ -20,7 +20,7 @@ import {
 } from '@mui/icons-material';
 import { FilterSidebar as StyledFilterSidebar } from '../styled/Layout';
 
-import { useFilters } from '../../hooks/useFilters';
+import { useSearch } from '../../contexts/SearchContext';
 import {
   ConditionAutocomplete,
   CheckboxGroup,
@@ -83,38 +83,51 @@ const FilterGroup: React.FC<FilterGroupProps> = ({
 };
 
 const FilterContent: React.FC = () => {
-  const { filters, activeFilterCount, updateFilter, clearFilters, clearFilter } = useFilters();
+  const { filters, activeFilterCount, updateFilter, clearFilters, triggerSearch } = useSearch();
 
   const handleConditionChange = (condition: string) => {
     updateFilter('condition', condition);
+    triggerSearch();
   };
 
   const handlePhaseChange = (phases: string[]) => {
     updateFilter('phase', phases);
+    triggerSearch();
   };
 
   const handleStatusChange = (statuses: string[]) => {
     updateFilter('status', statuses);
+    triggerSearch();
   };
 
   const handleLocationChange = (location: { city: string; radius: number }) => {
     updateFilter('location', location);
+    triggerSearch();
   };
 
   const handleLocationClear = () => {
-    clearFilter('location');
+    updateFilter('location', { city: '', radius: 50 });
+    triggerSearch();
   };
 
   const handleAgeRangeChange = (ageRange: { min: number; max: number }) => {
-    updateFilter('ageRange', ageRange);
+    updateFilter('ageRange', [ageRange.min, ageRange.max]);
+    triggerSearch();
   };
 
   const handleAgeRangeClear = () => {
-    clearFilter('ageRange');
+    updateFilter('ageRange', [18, 65]);
+    triggerSearch();
   };
 
   const handleGenderChange = (gender: 'all' | 'male' | 'female') => {
     updateFilter('gender', gender);
+    triggerSearch();
+  };
+
+  const handleClearAll = () => {
+    clearFilters();
+    triggerSearch();
   };
 
   return (
@@ -139,7 +152,7 @@ const FilterContent: React.FC = () => {
           <Button
             size="small"
             startIcon={<ClearIcon />}
-            onClick={clearFilters}
+            onClick={handleClearAll}
             sx={{ fontSize: '0.75rem', minWidth: 'auto' }}
           >
             Clear All
@@ -195,8 +208,8 @@ const FilterContent: React.FC = () => {
       {/* Age Range Filter */}
       <FilterGroup title="Age Range">
         <AgeRangeSlider
-          minAge={filters.ageRange?.min || 18}
-          maxAge={filters.ageRange?.max || 65}
+          minAge={filters.ageRange[0]}
+          maxAge={filters.ageRange[1]}
           onChange={handleAgeRangeChange}
           onClear={handleAgeRangeClear}
         />

@@ -3,3 +3,8 @@ export { AIContentGenerator } from './AIContentGenerator';
 export { AIValidationInsights } from './AIValidationInsights';
 export { AISmartSuggestions } from './AISmartSuggestions';
 export { AIProtocolDashboard } from './AIProtocolDashboard';
+export { AIFieldAssist } from './AIFieldAssist';
+export { AIEnhancedInput } from './AIEnhancedInput';
+export { AICoPilotSidebar } from './AICoPilotSidebar';
+export { AISampleSizeAgent } from './AISampleSizeAgent';
+export { AIIntroductionCopilot } from './AIIntroductionCopilot';

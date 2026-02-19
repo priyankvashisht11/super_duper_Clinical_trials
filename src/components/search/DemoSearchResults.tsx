@@ -338,10 +338,33 @@ export const DemoSearchResults: React.FC<DemoSearchResultsProps> = ({
   
   return (
     <DemoContainer>
-      <Alert severity="info" sx={{ mb: 2 }}>
+      <Alert 
+        severity="info" 
+        sx={{ 
+          mb: 2,
+          backgroundColor: '#e3f2fd',
+          border: '2px solid #2196f3',
+          borderRadius: 2,
+          '& .MuiAlert-icon': { 
+            color: '#1976d2',
+            fontSize: 28
+          },
+          '& .MuiAlert-message': { 
+            color: '#0d47a1',
+            '& .MuiAlertTitle-root': { 
+              color: '#0d47a1', 
+              fontWeight: 700,
+              fontSize: '1.1rem',
+              mb: 0.5
+            }
+          }
+        }}
+      >
         <AlertTitle>Demo Results</AlertTitle>
-        These are sample clinical trials for demonstration purposes. In the full platform, 
-        you would see real CTRI database results.
+        <Typography variant="body2" sx={{ fontWeight: 600, color: '#0d47a1' }}>
+          These are sample clinical trials for demonstration purposes. In the full platform, 
+          you would see real CTRI database results.
+        </Typography>
       </Alert>
       
       <ResultsHeader>

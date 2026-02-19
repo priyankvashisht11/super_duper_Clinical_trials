@@ -16,16 +16,17 @@ const IssueCard = styled(Card)<{ severity: 'error' | 'warning' | 'info' }>(({ se
 
   return {
     borderRadius: 12,
-    border: `1px solid ${alpha(color, 0.2)}`,
-    borderLeft: `4px solid ${color}`,
-    background: `linear-gradient(135deg, ${alpha(color, 0.02)} 0%, ${alpha(color, 0.05)} 100%)`,
-    boxShadow: `0 2px 8px ${alpha(color, 0.1)}`,
+    border: `2px solid ${alpha(color, 0.3)}`,
+    borderLeft: `6px solid ${color}`,
+    background: '#ffffff',
+    boxShadow: `0 4px 12px ${alpha(color, 0.15)}`,
     marginBottom: 16,
     transition: 'all 0.2s ease',
     
     '&:hover': {
       transform: 'translateY(-2px)',
-      boxShadow: `0 4px 12px ${alpha(color, 0.15)}`,
+      boxShadow: `0 6px 20px ${alpha(color, 0.25)}`,
+      borderColor: alpha(color, 0.5),
     },
   };
 });
@@ -33,26 +34,29 @@ const IssueCard = styled(Card)<{ severity: 'error' | 'warning' | 'info' }>(({ se
 const SeverityChip = styled(Chip)<{ severity: 'error' | 'warning' | 'info' }>(({ severity }) => {
   const severityStyles = {
     error: {
-      backgroundColor: alpha(colors.semantic.error, 0.1),
+      backgroundColor: alpha(colors.semantic.error, 0.15),
       color: colors.semantic.error,
-      border: `1px solid ${alpha(colors.semantic.error, 0.3)}`,
+      border: `2px solid ${colors.semantic.error}`,
+      fontWeight: 800,
     },
     warning: {
-      backgroundColor: alpha(colors.semantic.warning, 0.1),
+      backgroundColor: alpha(colors.semantic.warning, 0.15),
       color: colors.semantic.warning,
-      border: `1px solid ${alpha(colors.semantic.warning, 0.3)}`,
+      border: `2px solid ${colors.semantic.warning}`,
+      fontWeight: 800,
     },
     info: {
-      backgroundColor: alpha(colors.semantic.info, 0.1),
+      backgroundColor: alpha(colors.semantic.info, 0.15),
       color: colors.semantic.info,
-      border: `1px solid ${alpha(colors.semantic.info, 0.3)}`,
+      border: `2px solid ${colors.semantic.info}`,
+      fontWeight: 800,
     }
   };
 
   return {
-    height: 24,
+    height: 26,
     fontSize: '0.75rem',
-    fontWeight: 700,
+    fontWeight: 800,
     borderRadius: 6,
     ...severityStyles[severity],
   };
@@ -159,10 +163,14 @@ export const ValidationIssueCard: React.FC<ValidationIssueCardProps> = ({
 
         {/* Message */}
         <Typography 
-          variant="body2" 
+          variant="body1" 
           fontWeight={600} 
           color="text.primary"
-          sx={{ mb: issue.suggestion ? 0 : 1 }}
+          sx={{ 
+            mb: issue.suggestion ? 0 : 1,
+            fontSize: '0.95rem',
+            lineHeight: 1.6,
+          }}
         >
           {issue.message}
         </Typography>

@@ -13,6 +13,7 @@ import { SectionHeader, SectionCompletionAlert } from '../index';
 import { RichTextEditor } from '../RichTextEditor';
 import { useValidation } from '../../../hooks/useValidation';
 import { colors } from '../../../styles/theme';
+import { AISampleSizeAgent } from '../../ai/AISampleSizeAgent';
 
 const GradientButton = styled(Button)(() => ({
   background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
@@ -53,7 +54,13 @@ export const StatisticsEditor: React.FC = () => {
     secondaryEndpoints: '',
     // Additional
     multipleTesting: '',
-    missingDataHandling: ''
+    missingDataHandling: '',
+    // Data Management and Analysis
+    dataManagementPlan: '',
+    dataCollectionMethods: '',
+    dataQualityAssurance: '',
+    statisticalSoftware: '',
+    dataMonitoring: ''
   });
 
   useEffect(() => {
@@ -146,6 +153,32 @@ export const StatisticsEditor: React.FC = () => {
         />
       )}
 
+      {/* AI Sample Size Agent */}
+      {protocol && (
+        <Box sx={{ mb: 3 }}>
+          <AISampleSizeAgent
+            protocolContext={{
+              ...protocol,
+              studyDesignType: protocol?.sections?.find((s: any) => s.sectionNumber === '4')?.content?.studyDesignType,
+              numberOfArms: protocol?.sections?.find((s: any) => s.sectionNumber === '4')?.content?.numberOfArms,
+              controlType: protocol?.sections?.find((s: any) => s.sectionNumber === '4')?.content?.controlType
+            }}
+            onApplyCalculation={(calculation: any) => {
+              setStatsData({
+                ...statsData,
+                totalSampleSize: calculation.totalSampleSize.toString(),
+                sampleSizePerArm: calculation.sampleSizePerArm.toString(),
+                dropoutRate: (calculation.expectedDropoutRate * 100).toFixed(1) + '%',
+                sampleSizeJustification: calculation.justification,
+                powerAnalysis: calculation.powerAnalysis
+              });
+              setTimeout(() => handleSave(), 500);
+            }}
+            initialData={statsData}
+          />
+        </Box>
+      )}
+
       <Card>
         <Tabs
           value={activeTab}
@@ -162,6 +195,7 @@ export const StatisticsEditor: React.FC = () => {
           <Tab label="Analysis Sets" />
           <Tab label="Statistical Methods" />
           <Tab label="Endpoints" />
+          <Tab label="Data Management and Analysis" />
         </Tabs>
 
         <CardContent sx={{ p: 3 }}>
@@ -227,7 +261,19 @@ export const StatisticsEditor: React.FC = () => {
           {/* Analysis Sets Tab */}
           {activeTab === 1 && (
             <Box>
-              <Alert severity="info" sx={{ mb: 3 }}>
+              <Alert 
+                severity="info" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: '#e3f2fd',
+                  border: '2px solid #2196f3',
+                  '& .MuiAlert-icon': { color: '#1976d2' },
+                  '& .MuiAlert-message': { 
+                    color: '#0d47a1',
+                    '& .MuiTypography-root': { color: '#0d47a1', fontWeight: 600 }
+                  }
+                }}
+              >
                 Define the analysis populations (ITT, PP, Safety Set, etc.)
               </Alert>
 
@@ -329,6 +375,77 @@ export const StatisticsEditor: React.FC = () => {
                 onChange={(value) => setStatsData({ ...statsData, secondaryEndpoints: value })}
                 onSave={handleSave}
                 placeholder="List and define all secondary endpoints..."
+              />
+            </Box>
+          )}
+
+          {/* Data Management and Analysis Tab */}
+          {activeTab === 4 && (
+            <Box>
+              <Alert 
+                severity="info" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: '#e3f2fd',
+                  border: '2px solid #2196f3',
+                  '& .MuiAlert-icon': { color: '#1976d2' },
+                  '& .MuiAlert-message': { 
+                    color: '#0d47a1',
+                    '& .MuiTypography-root': { color: '#0d47a1', fontWeight: 600 }
+                  }
+                }}
+              >
+                Describe data management procedures, quality assurance, and analysis tools
+              </Alert>
+
+              <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                Data Management Plan
+              </Typography>
+              <RichTextEditor
+                value={statsData.dataManagementPlan}
+                onChange={(value) => setStatsData({ ...statsData, dataManagementPlan: value })}
+                onSave={handleSave}
+                placeholder="Describe overall data management strategy, responsibilities, and procedures..."
+              />
+
+              <Typography variant="subtitle2" fontWeight={600} gutterBottom mt={3}>
+                Data Collection Methods
+              </Typography>
+              <RichTextEditor
+                value={statsData.dataCollectionMethods}
+                onChange={(value) => setStatsData({ ...statsData, dataCollectionMethods: value })}
+                onSave={handleSave}
+                placeholder="Describe how data will be collected (e.g., EDC system, paper CRFs, ePRO)..."
+              />
+
+              <Typography variant="subtitle2" fontWeight={600} gutterBottom mt={3}>
+                Data Quality Assurance
+              </Typography>
+              <RichTextEditor
+                value={statsData.dataQualityAssurance}
+                onChange={(value) => setStatsData({ ...statsData, dataQualityAssurance: value })}
+                onSave={handleSave}
+                placeholder="Describe quality control procedures, data validation, query management..."
+              />
+
+              <Typography variant="subtitle2" fontWeight={600} gutterBottom mt={3}>
+                Statistical Software
+              </Typography>
+              <RichTextEditor
+                value={statsData.statisticalSoftware}
+                onChange={(value) => setStatsData({ ...statsData, statisticalSoftware: value })}
+                onSave={handleSave}
+                placeholder="e.g., SAS version 9.4, R version 4.0, SPSS..."
+              />
+
+              <Typography variant="subtitle2" fontWeight={600} gutterBottom mt={3}>
+                Data Monitoring Committee
+              </Typography>
+              <RichTextEditor
+                value={statsData.dataMonitoring}
+                onChange={(value) => setStatsData({ ...statsData, dataMonitoring: value })}
+                onSave={handleSave}
+                placeholder="Describe DMC composition, responsibilities, and meeting schedule..."
               />
             </Box>
           )}

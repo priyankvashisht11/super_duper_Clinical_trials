@@ -21,6 +21,13 @@ const StyledCard = styled(Card)(() => ({
   borderRadius: 16,
   overflow: 'hidden',
   boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+  '& .spin': {
+    animation: 'spin 1s linear infinite',
+  },
+  '@keyframes spin': {
+    '0%': { transform: 'rotate(0deg)' },
+    '100%': { transform: 'rotate(360deg)' },
+  },
 }));
 
 const StatusHeader = styled(Box)(() => ({
@@ -28,14 +35,33 @@ const StatusHeader = styled(Box)(() => ({
   borderBottom: '1px solid rgba(0,0,0,0.1)',
 }));
 
-const GradientButton = styled(Button)(() => ({
-  background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
-  borderRadius: 8,
+const ValidateButton = styled(Button)(() => ({
+  background: '#ffffff',
+  border: `3px solid ${colors.primary.main}`,
+  borderRadius: 12,
   textTransform: 'none',
-  fontWeight: 600,
+  fontWeight: 700,
+  fontSize: '1.1rem',
+  color: colors.primary.main,
+  boxShadow: `0 4px 16px ${colors.primary.main}30`,
+  padding: '14px 32px',
   '&:hover': {
-    background: `linear-gradient(135deg, ${colors.primary.dark} 0%, ${colors.secondary.dark} 100%)`,
+    background: colors.primary.main,
+    color: '#ffffff',
+    borderColor: colors.primary.dark,
+    boxShadow: `0 6px 20px ${colors.primary.main}40`,
+    transform: 'translateY(-2px)'
   },
+  '&:active': {
+    transform: 'translateY(0px)'
+  },
+  '&:disabled': {
+    background: colors.text.disabled,
+    borderColor: colors.text.disabled,
+    color: '#ffffff',
+    opacity: 0.6
+  },
+  transition: 'all 0.2s ease'
 }));
 
 interface ValidationStatusBarProps {
@@ -75,24 +101,31 @@ export const ValidationStatusBar: React.FC<ValidationStatusBarProps> = ({
     return (
       <StyledCard
         sx={{
-          background: `linear-gradient(135deg, ${colors.primary.light}15 0%, ${colors.secondary.light}15 100%)`,
-          border: `1px solid ${colors.primary.light}30`
+          background: '#ffffff',
+          border: `2px solid ${colors.primary.main}`,
+          boxShadow: `0 4px 16px ${colors.primary.main}30`
         }}
       >
-        <Box sx={{ p: 2 }}>
-          <Box display="flex" alignItems="center" justifyContent="space-between">
-            <Typography variant="body2" color="text.secondary">
-              No validation results yet
-            </Typography>
-            <GradientButton
-              size="small"
-              variant="contained"
-              onClick={handleValidate}
-              disabled={loading}
-            >
-              {loading ? 'Validating...' : 'Validate Now'}
-            </GradientButton>
+        <Box sx={{ p: 3 }}>
+          <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+            <Box>
+              <Typography variant="h6" fontWeight={700} gutterBottom>
+                Protocol Validation
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Check compliance with ICH M11 and regulatory requirements
+              </Typography>
+            </Box>
           </Box>
+          <ValidateButton
+            fullWidth
+            size="large"
+            onClick={handleValidate}
+            disabled={loading}
+            startIcon={loading ? <RefreshIcon className="spin" /> : <CheckCircleIcon />}
+          >
+            {loading ? 'Validating Protocol...' : 'Validate Now'}
+          </ValidateButton>
         </Box>
       </StyledCard>
     );

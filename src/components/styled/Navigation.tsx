@@ -33,15 +33,20 @@ export const LogoContainer = styled('div')(({ theme }) => ({
   gap: theme.spacing(2),
   
   '& .logo-text': {
-    fontSize: '1.25rem',
-    fontWeight: 700,
+    fontSize: '1.75rem',
+    fontWeight: 800,
     color: colors.primary.main,
     textDecoration: 'none',
+    letterSpacing: '-0.5px',
+    background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
   },
   
   '& .logo-icon': {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     color: colors.primary.main,
   },
 }));

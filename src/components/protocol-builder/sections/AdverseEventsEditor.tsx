@@ -155,7 +155,19 @@ export const AdverseEventsEditor: React.FC = () => {
           {/* Definitions */}
           {activeTab === 0 && (
             <Box>
-              <Alert severity="info" sx={{ mb: 3 }}>
+              <Alert 
+                severity="info" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: '#e3f2fd',
+                  border: '2px solid #2196f3',
+                  '& .MuiAlert-icon': { color: '#1976d2' },
+                  '& .MuiAlert-message': { 
+                    color: '#0d47a1',
+                    '& .MuiTypography-root': { color: '#0d47a1', fontWeight: 600 }
+                  }
+                }}
+              >
                 <Typography variant="body2" fontWeight={600} gutterBottom>
                   Section 9.1: Adverse Event and Serious Adverse Event Definitions
                 </Typography>
@@ -178,7 +190,20 @@ export const AdverseEventsEditor: React.FC = () => {
           {/* Assessment Procedures */}
           {activeTab === 1 && (
             <Box>
-              <Alert severity="warning" sx={{ mb: 3 }}>
+              <Alert 
+                severity="warning" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: '#fff3e0',
+                  border: '2px solid #ff9800',
+                  '& .MuiAlert-icon': { color: '#f57c00' },
+                  '& .MuiAlert-message': { 
+                    color: '#e65100',
+                    fontWeight: 600,
+                    '& .MuiTypography-root': { color: '#e65100', fontWeight: 600 }
+                  }
+                }}
+              >
                 <Typography variant="body2" fontWeight={600} gutterBottom>
                   Section 9.2: Assessment and Documentation Procedures
                 </Typography>
@@ -201,7 +226,20 @@ export const AdverseEventsEditor: React.FC = () => {
           {/* Reporting Requirements */}
           {activeTab === 2 && (
             <Box>
-              <Alert severity="error" sx={{ mb: 3 }}>
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: '#ffebee',
+                  border: '2px solid #f44336',
+                  '& .MuiAlert-icon': { color: '#d32f2f' },
+                  '& .MuiAlert-message': { 
+                    color: '#b71c1c',
+                    fontWeight: 600,
+                    '& .MuiTypography-root': { color: '#b71c1c', fontWeight: 600 }
+                  }
+                }}
+              >
                 <Typography variant="body2" fontWeight={600} gutterBottom>
                   Section 9.3: Reporting Requirements and Timelines
                 </Typography>
@@ -285,7 +323,19 @@ export const AdverseEventsEditor: React.FC = () => {
           {/* Follow-up Procedures */}
           {activeTab === 3 && (
             <Box>
-              <Alert severity="info" sx={{ mb: 3 }}>
+              <Alert 
+                severity="info" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: '#e3f2fd',
+                  border: '2px solid #2196f3',
+                  '& .MuiAlert-icon': { color: '#1976d2' },
+                  '& .MuiAlert-message': { 
+                    color: '#0d47a1',
+                    '& .MuiTypography-root': { color: '#0d47a1', fontWeight: 600 }
+                  }
+                }}
+              >
                 <Typography variant="body2" fontWeight={600} gutterBottom>
                   Section 9.4: Follow-up and Resolution Procedures
                 </Typography>

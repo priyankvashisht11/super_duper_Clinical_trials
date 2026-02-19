@@ -197,7 +197,18 @@ export const AppendicesEditor: React.FC = () => {
             </Box>
 
             {appendices.length === 0 ? (
-              <Alert severity="info">
+              <Alert 
+                severity="info"
+                sx={{ 
+                  backgroundColor: '#e3f2fd',
+                  border: '2px solid #2196f3',
+                  '& .MuiAlert-icon': { color: '#1976d2' },
+                  '& .MuiAlert-message': { 
+                    color: '#0d47a1',
+                    '& .MuiTypography-root': { color: '#0d47a1', fontWeight: 600 }
+                  }
+                }}
+              >
                 <Typography variant="body2">
                   No appendices added yet. Click "Add" to create supporting documents
                   like informed consent forms, case report forms, or laboratory manuals.

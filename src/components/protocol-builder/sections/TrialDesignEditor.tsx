@@ -155,63 +155,374 @@ export const TrialDesignEditor: React.FC = () => {
           <Typography variant="h6" fontWeight={700} gutterBottom>
             Design Overview
           </Typography>
+          
+          {/* Visual Design Overview */}
+          <Box sx={{ mb: 4, p: 4, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
+            <Grid container spacing={3} justifyContent="center">
+              <Grid item xs={12}>
+                <Card 
+                  sx={{ 
+                    minHeight: 160,
+                    minWidth: 180,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: 3,
+                    p: 2,
+                    '&:hover': {
+                      borderColor: colors.primary.main,
+                      boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+                      transform: 'translateY(-2px)'
+                    },
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  <CardContent sx={{ p: 3, width: '100%' }}>
+                    <Typography variant="h3" fontWeight={700} color="text.secondary" sx={{ mb: 2 }}>
+                      St.
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem', mb: 2 }}>
+                      Study Design
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      fontWeight={600} 
+                      sx={{ 
+                        fontSize: '0.9rem',
+                        color: designData.studyDesignType ? colors.primary.main : 'text.disabled',
+                        minHeight: '2.5em',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {designData.studyDesignType || 'Not Selected'}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Card 
+                  sx={{ 
+                    minHeight: 160,
+                    minWidth: 180,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: 3,
+                    p: 2,
+                    '&:hover': {
+                      borderColor: colors.primary.main,
+                      boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+                      transform: 'translateY(-2px)'
+                    },
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  <CardContent sx={{ p: 3, width: '100%' }}>
+                    <Typography variant="h3" fontWeight={700} color="text.secondary" sx={{ mb: 2 }}>
+                      Cx.
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem', mb: 2 }}>
+                      Control Type
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      fontWeight={600} 
+                      sx={{ 
+                        fontSize: '0.9rem',
+                        color: designData.controlType ? colors.primary.main : 'text.disabled',
+                        minHeight: '2.5em',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {designData.controlType || 'Not Selected'}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Card 
+                  sx={{ 
+                    minHeight: 160,
+                    minWidth: 180,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: 3,
+                    p: 2,
+                    '&:hover': {
+                      borderColor: colors.primary.main,
+                      boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+                      transform: 'translateY(-2px)'
+                    },
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  <CardContent sx={{ p: 3, width: '100%' }}>
+                    <Typography variant="h3" fontWeight={700} color="text.secondary" sx={{ mb: 2 }}>
+                      Ar.
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem', mb: 2 }}>
+                      Allocation
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      fontWeight={600} 
+                      sx={{ 
+                        fontSize: '0.9rem',
+                        color: designData.allocationStrategy ? colors.primary.main : 'text.disabled',
+                        minHeight: '2.5em',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {designData.allocationStrategy || 'Not Selected'}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Card 
+                  sx={{ 
+                    minHeight: 160,
+                    minWidth: 180,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: 3,
+                    p: 2,
+                    '&:hover': {
+                      borderColor: colors.primary.main,
+                      boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+                      transform: 'translateY(-2px)'
+                    },
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  <CardContent sx={{ p: 3, width: '100%' }}>
+                    <Typography variant="h3" fontWeight={700} color="text.secondary" sx={{ mb: 2 }}>
+                      Br.
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem', mb: 2 }}>
+                      Blinding Level
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      fontWeight={600} 
+                      sx={{ 
+                        fontSize: '0.9rem',
+                        color: designData.blindingLevel ? colors.primary.main : 'text.disabled',
+                        minHeight: '2.5em',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {designData.blindingLevel || 'Not Selected'}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          </Box>
+          
+          {/* Subtle connecting lines */}
+          <Box sx={{ 
+            position: 'relative',
+            height: '40px',
+            mb: 2,
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: '50%',
+              left: '12.5%',
+              right: '12.5%',
+              height: '2px',
+              background: `linear-gradient(90deg, transparent 0%, ${colors.primary.light} 20%, ${colors.primary.main} 50%, ${colors.primary.light} 80%, transparent 100%)`,
+              opacity: 0.6
+            }
+          }}>
+            {/* Connection dots */}
+            <Box sx={{ 
+              position: 'absolute',
+              top: '50%',
+              left: '12.5%',
+              right: '12.5%',
+              display: 'flex',
+              justifyContent: 'space-between',
+              transform: 'translateY(-50%)'
+            }}>
+              {[0, 1, 2, 3].map((index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    backgroundColor: colors.primary.main,
+                    animation: `pulse-${index} 2s infinite`,
+                    animationDelay: `${index * 0.2}s`,
+                    boxShadow: `0 0 10px ${colors.primary.main}40`,
+                    [`@keyframes pulse-${index}`]: {
+                      '0%, 100%': {
+                        transform: 'scale(1)',
+                        opacity: 0.7
+                      },
+                      '50%': {
+                        transform: 'scale(1.3)',
+                        opacity: 1
+                      }
+                    }
+                  }}
+                />
+              ))}
+            </Box>
+          </Box>
+          
           <Grid container spacing={3} mb={4}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <FormControl fullWidth>
-                <InputLabel>Study Design Type *</InputLabel>
+                <InputLabel sx={{ fontSize: '1.1rem', fontWeight: 500 }}>Study Design Type *</InputLabel>
                 <Select
                   value={designData.studyDesignType}
                   onChange={(e) => setDesignData({ ...designData, studyDesignType: e.target.value })}
                   label="Study Design Type *"
+                  sx={{ 
+                    height: '70px',
+                    '& .MuiSelect-select': {
+                      fontSize: '1.1rem',
+                      padding: '20px 14px',
+                      height: '30px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderWidth: '2px'
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontSize: '1.1rem',
+                      fontWeight: 500
+                    }
+                  }}
                 >
-                  <MenuItem value="Parallel">Parallel Group</MenuItem>
-                  <MenuItem value="Crossover">Crossover</MenuItem>
-                  <MenuItem value="Factorial">Factorial</MenuItem>
-                  <MenuItem value="Adaptive">Adaptive</MenuItem>
-                  <MenuItem value="Sequential">Sequential</MenuItem>
+                  <MenuItem value="Parallel" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Parallel Group</MenuItem>
+                  <MenuItem value="Crossover" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Crossover</MenuItem>
+                  <MenuItem value="Factorial" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Factorial</MenuItem>
+                  <MenuItem value="Adaptive" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Adaptive</MenuItem>
+                  <MenuItem value="Sequential" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Sequential</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <FormControl fullWidth>
-                <InputLabel>Control Type *</InputLabel>
+                <InputLabel sx={{ fontSize: '1.1rem', fontWeight: 500 }}>Control Type *</InputLabel>
                 <Select
                   value={designData.controlType}
                   onChange={(e) => setDesignData({ ...designData, controlType: e.target.value })}
                   label="Control Type *"
+                  sx={{ 
+                    height: '70px',
+                    '& .MuiSelect-select': {
+                      fontSize: '1.1rem',
+                      padding: '20px 14px',
+                      height: '30px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderWidth: '2px'
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontSize: '1.1rem',
+                      fontWeight: 500
+                    }
+                  }}
                 >
-                  <MenuItem value="Placebo">Placebo Controlled</MenuItem>
-                  <MenuItem value="Active">Active Controlled</MenuItem>
-                  <MenuItem value="Dose">Dose Comparison</MenuItem>
-                  <MenuItem value="Uncontrolled">Uncontrolled</MenuItem>
+                  <MenuItem value="Placebo" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Placebo Controlled</MenuItem>
+                  <MenuItem value="Active" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Active Controlled</MenuItem>
+                  <MenuItem value="Dose" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Dose Comparison</MenuItem>
+                  <MenuItem value="Uncontrolled" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Uncontrolled</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <FormControl fullWidth>
-                <InputLabel>Allocation Strategy *</InputLabel>
+                <InputLabel sx={{ fontSize: '1.1rem', fontWeight: 500 }}>Allocation Strategy *</InputLabel>
                 <Select
                   value={designData.allocationStrategy}
                   onChange={(e) => setDesignData({ ...designData, allocationStrategy: e.target.value })}
                   label="Allocation Strategy *"
+                  sx={{ 
+                    height: '70px',
+                    '& .MuiSelect-select': {
+                      fontSize: '1.1rem',
+                      padding: '20px 14px',
+                      height: '30px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderWidth: '2px'
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontSize: '1.1rem',
+                      fontWeight: 500
+                    }
+                  }}
                 >
-                  <MenuItem value="Randomized">Randomized</MenuItem>
-                  <MenuItem value="Non-Randomized">Non-Randomized</MenuItem>
+                  <MenuItem value="Randomized" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Randomized</MenuItem>
+                  <MenuItem value="Non-Randomized" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Non-Randomized</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <FormControl fullWidth>
-                <InputLabel>Blinding Level *</InputLabel>
+                <InputLabel sx={{ fontSize: '1.1rem', fontWeight: 500 }}>Blinding Level *</InputLabel>
                 <Select
                   value={designData.blindingLevel}
                   onChange={(e) => setDesignData({ ...designData, blindingLevel: e.target.value })}
                   label="Blinding Level *"
+                  sx={{ 
+                    height: '70px',
+                    '& .MuiSelect-select': {
+                      fontSize: '1.1rem',
+                      padding: '20px 14px',
+                      height: '30px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderWidth: '2px'
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontSize: '1.1rem',
+                      fontWeight: 500
+                    }
+                  }}
                 >
-                  <MenuItem value="Open-Label">Open-Label</MenuItem>
-                  <MenuItem value="Single-Blind">Single-Blind</MenuItem>
-                  <MenuItem value="Double-Blind">Double-Blind</MenuItem>
-                  <MenuItem value="Triple-Blind">Triple-Blind</MenuItem>
+                  <MenuItem value="Open-Label" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Open-Label</MenuItem>
+                  <MenuItem value="Single-Blind" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Single-Blind</MenuItem>
+                  <MenuItem value="Double-Blind" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Double-Blind</MenuItem>
+                  <MenuItem value="Triple-Blind" sx={{ fontSize: '1rem', padding: '12px 16px' }}>Triple-Blind</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -224,7 +535,7 @@ export const TrialDesignEditor: React.FC = () => {
                 Randomization Details
               </Typography>
               <Grid container spacing={3} mb={4}>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12}>
                   <FormControl fullWidth>
                     <InputLabel>Randomization Method</InputLabel>
                     <Select
@@ -240,7 +551,7 @@ export const TrialDesignEditor: React.FC = () => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12}>
                   <TextField
                     fullWidth
                     label="Randomization Ratio"
@@ -272,7 +583,7 @@ export const TrialDesignEditor: React.FC = () => {
             <Grid item xs={12}>
               <Grid container spacing={2}>
                 {designData.armNames.map((armName, index) => (
-                  <Grid item xs={12} md={6} key={index}>
+                  <Grid item xs={12} key={index}>
                     <TextField
                       fullWidth
                       label={`Arm ${index + 1} Name`}
@@ -340,3 +651,5 @@ export const TrialDesignEditor: React.FC = () => {
     </Box>
   );
 };
+
+

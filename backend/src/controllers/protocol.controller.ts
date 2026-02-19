@@ -49,7 +49,7 @@ export const protocolController = {
               sectionNumber: section.number,
               sectionTitle: section.title,
               sectionType: section.type,
-              isRequired: section.required,
+              
               orderIndex: index,
               content: {}
             }))
@@ -69,7 +69,7 @@ export const protocolController = {
       const pageNum = parseInt(page as string);
       const limitNum = parseInt(limit as string);
       const skip = (pageNum - 1) * limitNum;
-      const where: any = { deletedAt: null };
+      const where: any = {};
       if (status) where.protocolStatus = status;
       if (search) {
         where.OR = [
@@ -120,7 +120,7 @@ export const protocolController = {
           interventions: true
         }
       });
-      if (!protocol || protocol.deletedAt) {
+      if (!protocol) {
         return res.status(404).json({ success: false, error: 'Protocol not found' });
       }
       res.json({ success: true, data: protocol });
@@ -148,7 +148,7 @@ export const protocolController = {
   delete: async (req: Request, res: Response) => {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      await prisma.protocol.update({ where: { id }, data: { deletedAt: new Date() } });
+      await prisma.protocol.delete({ where: { id } });
       res.json({ success: true, message: 'Protocol deleted' });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
@@ -367,3 +367,4 @@ export const protocolController = {
 };
 
 export default protocolController;
+

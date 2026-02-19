@@ -15,6 +15,10 @@ import {
 import { useProtocol } from '../../../contexts/ProtocolContext';
 import { useValidation } from '../../../hooks/useValidation';
 import { colors } from '../../../styles/theme';
+import { AICoPilotProvider } from '../../../contexts/AICoPilotContext';
+import { AIEnhancedInput } from '../../ai/AIEnhancedInput';
+import { AIFieldAssist } from '../../ai/AIFieldAssist';
+import { AICoPilotSidebar } from '../../ai/AICoPilotSidebar';
 
 const StyledCard = styled(Card)(() => ({
   background: `linear-gradient(135deg, ${colors.primary.light}15 0%, ${colors.secondary.light}15 100%)`,
@@ -154,9 +158,10 @@ export const EligibilityEditor: React.FC = () => {
   };
 
   return (
-    <Box>
-      {/* Header */}
-      <StyledCard sx={{ mb: 3 }}>
+    <AICoPilotProvider>
+      <Box>
+        {/* Header */}
+        <StyledCard sx={{ mb: 3 }}>
         <CardContent>
           <Box display="flex" alignItems="center" gap={2} mb={2}>
             <PeopleIcon sx={{ fontSize: 40, color: colors.primary.main }} />
@@ -200,143 +205,175 @@ export const EligibilityEditor: React.FC = () => {
         </CardContent>
       </StyledCard>
 
-      {/* Tabs */}
-      <Card sx={{ mb: 3 }}>
-        <StyledTabs
-          value={activeTab}
-          onChange={(_, newValue) => setActiveTab(newValue)}
-        >
-          <Tab
-            icon={<CheckCircleIcon />}
-            iconPosition="start"
-            label={`Inclusion Criteria (${inclusionCriteria.length})`}
-          />
-          <Tab
-            icon={<CancelIcon />}
-            iconPosition="start"
-            label={`Exclusion Criteria (${exclusionCriteria.length})`}
-          />
-        </StyledTabs>
-        
-        <CardContent>
-          {/* Add New Criterion */}
-          <Box display="flex" gap={2} mb={3}>
-            <TextField
-              fullWidth
-              multiline
-              rows={2}
-              placeholder={`Enter new ${currentType} criterion...`}
-              value={newCriterion}
-              onChange={(e) => setNewCriterion(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && e.ctrlKey) {
-                  handleAddCriterion();
-                }
-              }}
-            />
-            <GradientButton
-              variant="contained"
-              onClick={handleAddCriterion}
-              disabled={!newCriterion.trim() || saving}
-            >
-              <AddIcon sx={{ mr: 1 }} />
-              Add
-            </GradientButton>
-          </Box>
-
-          {/* Criteria List */}
-          {currentCriteria.length === 0 ? (
-            <Alert
-              severity="info"
-              icon={currentType === 'inclusion' ? <CheckCircleIcon /> : <CancelIcon />}
-            >
-              No {currentType} criteria defined yet. Add your first criterion above.
-            </Alert>
-          ) : (
-            <Box display="flex" flexDirection="column" gap={2}>
-              {currentCriteria.map((criterion) => (
-                <Fade in key={criterion.id}>
-                  <CriterionCard
-                    variant="outlined"
-                    sx={{
-                      borderLeft: `4px solid ${
-                        criterion.criterionType === 'inclusion'
-                          ? colors.semantic.success
-                          : colors.semantic.error
-                      }`
-                    }}
+        {/* Main Content with AI Co-Pilot Sidebar */}
+        <Box sx={{ display: 'flex', gap: 3 }}>
+          {/* Left Column - Main Content */}
+          <Box sx={{ flex: 1 }}>
+            {/* Tabs */}
+            <Card sx={{ mb: 3 }}>
+              <StyledTabs
+                value={activeTab}
+                onChange={(_, newValue) => setActiveTab(newValue)}
+              >
+                <Tab
+                  icon={<CheckCircleIcon />}
+                  iconPosition="start"
+                  label={`Inclusion Criteria (${inclusionCriteria.length})`}
+                />
+                <Tab
+                  icon={<CancelIcon />}
+                  iconPosition="start"
+                  label={`Exclusion Criteria (${exclusionCriteria.length})`}
+                />
+              </StyledTabs>
+              
+              <CardContent>
+                {/* Add New Criterion with AI */}
+                <Box display="flex" gap={2} mb={3}>
+                  <Box sx={{ flex: 1, display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                    <AIEnhancedInput
+                      fieldName={`${currentType}CriterionText`}
+                      fieldType="eligibility"
+                      sectionNumber="4"
+                      protocolContext={protocol}
+                      value={newCriterion}
+                      onChange={(value: string) => setNewCriterion(value)}
+                      label={`New ${currentType === 'inclusion' ? 'Inclusion' : 'Exclusion'} Criterion`}
+                      multiline
+                      rows={2}
+                      placeholder={`e.g., Age ≥ 18 years at screening`}
+                    />
+                    <AIFieldAssist
+                      fieldName={`${currentType}CriterionText`}
+                      fieldValue={newCriterion}
+                      sectionNumber="4"
+                      protocolContext={protocol}
+                      onSuggestionSelect={(value: string) => setNewCriterion(value)}
+                    />
+                  </Box>
+                  <GradientButton
+                    variant="contained"
+                    onClick={handleAddCriterion}
+                    disabled={!newCriterion.trim() || saving}
                   >
-                    <CardContent>
-                      <Box display="flex" gap={2} alignItems="start">
-                        <Chip
-                          label={criterion.criterionNumber}
-                          size="small"
+                    <AddIcon sx={{ mr: 1 }} />
+                    Add
+                  </GradientButton>
+                </Box>
+
+                {/* Criteria List */}
+                {currentCriteria.length === 0 ? (
+                  <Alert
+                    severity="info"
+                    icon={currentType === 'inclusion' ? <CheckCircleIcon /> : <CancelIcon />}
+                  >
+                    No {currentType} criteria defined yet. Add your first criterion above.
+                  </Alert>
+                ) : (
+                  <Box display="flex" flexDirection="column" gap={2}>
+                    {currentCriteria.map((criterion) => (
+                      <Fade in key={criterion.id}>
+                        <CriterionCard
+                          variant="outlined"
                           sx={{
-                            backgroundColor: `${
+                            borderLeft: `4px solid ${
                               criterion.criterionType === 'inclusion'
                                 ? colors.semantic.success
                                 : colors.semantic.error
-                            }20`,
-                            color:
-                              criterion.criterionType === 'inclusion'
-                                ? colors.semantic.success
-                                : colors.semantic.error,
-                            fontWeight: 700,
-                            minWidth: 40
+                            }`
                           }}
-                        />
-                        
-                        {editingId === criterion.id ? (
-                          <TextField
-                            fullWidth
-                            multiline
-                            defaultValue={criterion.criterionText}
-                            onBlur={(e) => handleUpdateCriterion(criterion.id!, e.target.value)}
-                            autoFocus
-                          />
-                        ) : (
-                          <Typography flex={1} variant="body1">
-                            {criterion.criterionText}
-                          </Typography>
-                        )}
-                        
-                        <Box display="flex" gap={1}>
-                          <IconButton
-                            size="small"
-                            onClick={() => setEditingId(criterion.id!)}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDeleteCriterion(criterion.id!)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </CriterionCard>
-                </Fade>
-              ))}
-            </Box>
-          )}
-        </CardContent>
-      </Card>
+                        >
+                          <CardContent>
+                            <Box display="flex" gap={2} alignItems="start">
+                              <Chip
+                                label={criterion.criterionNumber}
+                                size="small"
+                                sx={{
+                                  backgroundColor: `${
+                                    criterion.criterionType === 'inclusion'
+                                      ? colors.semantic.success
+                                      : colors.semantic.error
+                                  }20`,
+                                  color:
+                                    criterion.criterionType === 'inclusion'
+                                      ? colors.semantic.success
+                                      : colors.semantic.error,
+                                  fontWeight: 700,
+                                  minWidth: 40
+                                }}
+                              />
+                              
+                              {editingId === criterion.id ? (
+                                <TextField
+                                  fullWidth
+                                  multiline
+                                  defaultValue={criterion.criterionText}
+                                  onBlur={(e) => handleUpdateCriterion(criterion.id!, e.target.value)}
+                                  autoFocus
+                                />
+                              ) : (
+                                <Typography flex={1} variant="body1">
+                                  {criterion.criterionText}
+                                </Typography>
+                              )}
+                              
+                              <Box display="flex" gap={1}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => setEditingId(criterion.id!)}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleDeleteCriterion(criterion.id!)}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Box>
+                            </Box>
+                          </CardContent>
+                        </CriterionCard>
+                      </Fade>
+                    ))}
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
 
-      {/* Helper Text */}
-      <Alert severity="info" sx={{ mt: 2 }}>
-        <Typography variant="body2" fontWeight={600} gutterBottom>
-          Tips for Writing Criteria:
-        </Typography>
-        <ul style={{ margin: 0, paddingLeft: 20 }}>
-          <li>Be specific and measurable</li>
-          <li>Use objective criteria when possible</li>
-          <li>Consider regulatory requirements</li>
-          <li>Press Ctrl+Enter to quickly add criteria</li>
-        </ul>
-      </Alert>
-    </Box>
+            {/* Helper Text */}
+            <Alert 
+              severity="info" 
+              sx={{ 
+                mt: 2,
+                backgroundColor: '#e3f2fd',
+                border: '2px solid #2196f3',
+                '& .MuiAlert-icon': { color: '#1976d2' },
+                '& .MuiAlert-message': { 
+                  color: '#0d47a1',
+                  '& .MuiTypography-root': { color: '#0d47a1', fontWeight: 600 }
+                }
+              }}
+            >
+              <Typography variant="body2" fontWeight={600} gutterBottom>
+                Tips for Writing Criteria:
+              </Typography>
+              <ul style={{ margin: 0, paddingLeft: 20 }}>
+                <li>Be specific and measurable</li>
+                <li>Use objective criteria when possible</li>
+                <li>Consider regulatory requirements</li>
+                <li>Press Ctrl+Enter to quickly add criteria</li>
+              </ul>
+            </Alert>
+          </Box>
+
+          {/* Right Column - AI Co-Pilot Sidebar */}
+          <Box sx={{ width: 350, flexShrink: 0 }}>
+            <AICoPilotSidebar />
+          </Box>
+        </Box>
+      </Box>
+    </AICoPilotProvider>
   );
 };

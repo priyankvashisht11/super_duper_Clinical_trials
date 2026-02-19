@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Fade, Grow } from '@mui/material';
 import { PlayArrow as PlayIcon } from '@mui/icons-material';
 import { styled, alpha } from '@mui/material/styles';
@@ -7,6 +8,7 @@ import { SearchBar } from '../search/SearchBar';
 import { DemoSearchResults } from '../search/DemoSearchResults';
 import { colors } from '../../styles/theme';
 import type { ClinicalTrial } from '../../types';
+import clinicalIQLogo from '../../assets/clinical_iq_logo_concept_2.png';
 
 // Styled components for the hero section that fits within the main layout
 const HeroContainer = styled(Box)(({ theme }) => ({
@@ -62,10 +64,11 @@ const HeroSubtitle = styled(Typography)(({ theme }) => ({
   fontWeight: 400,
   color: colors.text.secondary,
   textAlign: 'center',
-  marginBottom: theme.spacing(4),
   lineHeight: 1.5,
   maxWidth: '600px',
-  margin: `0 auto ${theme.spacing(4)}px`,
+  marginLeft: 'auto',
+  marginRight: 'auto',
+  marginBottom: theme.spacing(4),
   
   [theme.breakpoints.down('sm')]: {
     fontSize: '1rem',
@@ -185,6 +188,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   onDemo,
   onRegister,
 }) => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([
@@ -194,13 +198,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   ]);
 
   const handleSearch = (query: string) => {
+    // Show demo results on landing page
     setSearchQuery(query);
     setShowResults(true);
-    
-    // Add to recent searches if not already present
-    if (!recentSearches.includes(query)) {
-      setRecentSearches(prev => [query, ...prev.slice(0, 4)]);
-    }
     
     if (onSearch) {
       onSearch(query);
@@ -216,14 +216,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     const demoQuery = 'diabetes Phase III Mumbai';
     setSearchQuery(demoQuery);
     setShowResults(true);
+    
     if (onDemo) {
       onDemo();
     }
   };
 
   const handleTrialSelect = (trial: ClinicalTrial) => {
-    console.log('Trial selected:', trial);
-    // This would typically open a detailed view or add to document generation
+    // Navigate to Research Hub when a trial is selected
+    navigate('/research-hub', { state: { searchQuery: trial.condition, autoSearch: true } });
   };
 
   const handleClearRecentSearch = (search: string) => {
@@ -234,7 +235,16 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     <HeroContainer>
       <Box sx={{ position: 'relative', zIndex: 1 }}>
         <Fade in timeout={600}>
-          <Box>
+          <Box sx={{ textAlign: 'center' }}>
+            <img 
+              src={clinicalIQLogo} 
+              alt="Clinical IQ Logo" 
+              style={{ 
+                height: '120px', 
+                width: 'auto',
+                marginBottom: '24px'
+              }} 
+            />
             <HeroTitle variant="h1">
               AI-Powered Clinical Trials Research
               <br />
@@ -247,7 +257,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   backgroundClip: 'text',
                 }}
               >
-                for Indian Physicians
+                for Indian Doctors & Researchers
               </Box>
             </HeroTitle>
           </Box>
@@ -256,7 +266,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         <Fade in timeout={800} style={{ transitionDelay: '200ms' }}>
           <Box>
             <HeroSubtitle variant="h6">
-              Search 12,000+ CTRI trials, generate research summaries, and match patients 
+              Clinical IQ: Search 12,000+ CTRI trials, generate research summaries, and match patients 
               with AI-powered tools designed for medical professionals
             </HeroSubtitle>
           </Box>
@@ -289,17 +299,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           </CTAContainer>
         </Fade>
 
-        {showResults && searchQuery && (
-          <Fade in timeout={600}>
-            <Box sx={{ mt: 4 }}>
-              <DemoSearchResults
-                query={searchQuery}
-                onTrialSelect={handleTrialSelect}
-              />
-            </Box>
-          </Fade>
-        )}
-
         <Fade in timeout={1400} style={{ transitionDelay: '800ms' }}>
           <StatsContainer>
             <StatItem>
@@ -316,6 +315,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </StatItem>
           </StatsContainer>
         </Fade>
+
+        {/* Demo Search Results */}
+        {showResults && searchQuery && (
+          <Fade in timeout={600}>
+            <Box sx={{ mt: 4 }}>
+              <DemoSearchResults 
+                query={searchQuery} 
+                onTrialSelect={handleTrialSelect}
+              />
+            </Box>
+          </Fade>
+        )}
       </Box>
     </HeroContainer>
   );

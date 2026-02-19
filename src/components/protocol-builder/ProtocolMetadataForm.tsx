@@ -1,17 +1,11 @@
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { Box, Typography, TextField, MenuItem, Button, Alert, CircularProgress, alpha, Fade } from '@mui/material';
+import { Box, Typography, TextField, MenuItem, Button, CircularProgress, alpha, Fade } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { Save, Warning as WarningIcon } from '@mui/icons-material';
 import { useProtocol } from '../../contexts/ProtocolContext';
 import { useValidation } from '../../hooks/useValidation';
 import { colors } from '../../styles/theme';
-
-const FormContainer = styled(Box)({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 24,
-});
 
 const FormHeader = styled(Box)(() => ({
   paddingBottom: 24,
@@ -99,16 +93,27 @@ interface ProtocolMetadata {
 export const ProtocolMetadataForm: React.FC = () => {
   const { protocol, updateProtocol, loading } = useProtocol();
   const { validateProtocol } = useValidation();
-  const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm<ProtocolMetadata>();
+  const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm<ProtocolMetadata>({
+    defaultValues: {
+      sponsorProtocolIdentifier: '',
+      fullTitle: '',
+      shortTitle: '',
+      protocolVersion: '',
+      protocolDate: '',
+      trialPhase: '',
+      indication: '',
+      studyType: ''
+    }
+  });
 
   useEffect(() => {
     if (protocol) {
       reset({
-        sponsorProtocolIdentifier: protocol.sponsorProtocolIdentifier,
-        fullTitle: protocol.fullTitle,
+        sponsorProtocolIdentifier: protocol.sponsorProtocolIdentifier || '',
+        fullTitle: protocol.fullTitle || '',
         shortTitle: protocol.shortTitle || '',
-        protocolVersion: protocol.protocolVersion,
-        protocolDate: protocol.protocolDate.split('T')[0],
+        protocolVersion: protocol.protocolVersion || '',
+        protocolDate: protocol.protocolDate ? protocol.protocolDate.split('T')[0] : '',
         trialPhase: protocol.trialPhase || '',
         indication: protocol.indication || '',
         studyType: protocol.studyType || ''
@@ -134,7 +139,7 @@ export const ProtocolMetadataForm: React.FC = () => {
   }
 
   return (
-    <FormContainer component="form" onSubmit={handleSubmit(onSubmit)}>
+    <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <FormHeader>
         <Typography 
           variant="h4" 
@@ -279,6 +284,6 @@ export const ProtocolMetadataForm: React.FC = () => {
           {loading ? 'Saving...' : 'Save Changes'}
         </SaveButton>
       </Box>
-    </FormContainer>
+    </Box>
   );
 };

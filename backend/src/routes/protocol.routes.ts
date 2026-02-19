@@ -31,6 +31,7 @@ router.get('/:id/validation/latest', validationController.getLatestValidation);
 // General protocol routes
 router.get('/:id', protocolController.getById);
 router.put('/:id', protocolController.update);
+router.patch('/:id', protocolController.update); // Support PATCH for partial updates
 router.delete('/:id', protocolController.delete);
 
 // Objectives

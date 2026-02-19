@@ -7,15 +7,25 @@ export const validateProtocol = async (req: Request, res: Response) => {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const { level = 'full' } = req.query; // 'full' or 'quick'
 
+    console.log('Validating protocol:', id);
+
     // Run validation
     const report = await validationEngine.validateProtocol(id);
+
+    console.log('Validation complete:', report.overallStatus);
 
     res.json({
       success: true,
       data: report
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Validation error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      details: error.stack 
+    });
   }
 };
 

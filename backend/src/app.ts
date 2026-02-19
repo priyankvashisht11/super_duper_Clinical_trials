@@ -3,6 +3,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { protocolRoutes } from './routes/protocol.routes';
 import aiRoutes from './routes/ai.routes';
+import researchRoutes from './routes/research.routes';
+import authRoutes from './routes/auth.routes';
+import userRoutes from './routes/user.routes';
+import notificationRoutes from './routes/notification.routes';
 
 dotenv.config();
 
@@ -20,8 +24,12 @@ app.get('/health', (req, res) => {
 });
 
 // Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/protocols', protocolRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/research', researchRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

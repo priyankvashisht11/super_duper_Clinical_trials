@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Typography, List, ListItemButton, Chip, alpha } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -25,33 +25,37 @@ const NavList = styled(List)({
   overflowY: 'auto',
 });
 
-const SectionButton = styled(ListItemButton)<{ active?: boolean }>(({ active }) => ({
+const SectionButton = styled(ListItemButton, {
+  shouldForwardProp: (prop) => prop !== '$active',
+})<{ $active?: boolean }>(({ $active }) => ({
   borderRadius: 12,
   marginBottom: 8,
   padding: '12px 16px',
   transition: 'all 0.2s ease',
-  border: `1px solid ${active ? colors.primary.main : 'transparent'}`,
-  background: active 
+  border: `1px solid ${$active ? colors.primary.main : 'transparent'}`,
+  background: $active 
     ? `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`
     : 'transparent',
   
   '&:hover': {
-    background: active
+    background: $active
       ? `linear-gradient(135deg, ${colors.primary.dark} 0%, ${colors.secondary.dark} 100%)`
       : alpha(colors.primary.main, 0.08),
     transform: 'translateX(4px)',
-    boxShadow: active 
+    boxShadow: $active 
       ? `0 4px 12px ${alpha(colors.primary.main, 0.3)}`
       : `0 2px 8px ${alpha(colors.primary.main, 0.1)}`,
   },
 }));
 
-const SectionNumber = styled(Chip)<{ active?: boolean }>(({ active }) => ({
+const SectionNumber = styled(Chip, {
+  shouldForwardProp: (prop) => prop !== '$active',
+})<{ $active?: boolean }>(({ $active }) => ({
   height: 24,
   fontSize: '0.75rem',
   fontWeight: 700,
-  background: active ? 'rgba(255, 255, 255, 0.2)' : alpha(colors.primary.main, 0.1),
-  color: active ? '#ffffff' : colors.primary.main,
+  background: $active ? 'rgba(255, 255, 255, 0.2)' : alpha(colors.primary.main, 0.1),
+  color: $active ? '#ffffff' : colors.primary.main,
   border: 'none',
 }));
 
@@ -75,21 +79,27 @@ export const SectionNav: React.FC<SectionNavProps> = ({ sections, protocolId, se
   const { getLatestValidation } = useValidation();
   const [validationReport, setValidationReport] = useState<any>(null);
 
+  const loadValidation = useCallback(async () => {
+    try {
+      const report = await getLatestValidation(protocolId);
+      if (report) {
+        setValidationReport(report);
+      }
+    } catch (error) {
+      // Silently fail - validation is optional
+      console.debug('No validation report available yet');
+    }
+  }, [protocolId, getLatestValidation]);
+
   useEffect(() => {
     if (protocolId) {
       loadValidation();
-      // Poll for updates every 30 seconds
-      const interval = setInterval(loadValidation, 30000);
+      // Poll for updates every 2 minutes (reduced frequency)
+      const interval = setInterval(loadValidation, 120000);
       return () => clearInterval(interval);
     }
-  }, [protocolId]);
-
-  const loadValidation = async () => {
-    const report = await getLatestValidation(protocolId);
-    if (report) {
-      setValidationReport(report);
-    }
-  };
+    return undefined;
+  }, [protocolId, loadValidation]);
 
   const handleSectionClick = (sectionNumber: string) => {
     navigate(`/protocols/${protocolId}/section/${sectionNumber}`);
@@ -142,13 +152,13 @@ export const SectionNav: React.FC<SectionNavProps> = ({ sections, protocolId, se
             <SectionButton
               key={section.id}
               onClick={() => handleSectionClick(section.sectionNumber)}
-              active={active}
+              $active={active}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1 }}>
                 <SectionNumber 
                   label={section.sectionNumber}
                   size="small"
-                  active={active}
+                  $active={active}
                 />
                 <Typography 
                   variant="body2" 

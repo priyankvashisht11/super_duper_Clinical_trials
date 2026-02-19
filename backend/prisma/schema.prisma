@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -27,7 +27,7 @@ model Protocol {
   
   // Status tracking
   protocolStatus              String    @default("draft") @map("protocol_status") @db.VarChar(50)
-  completenessPercentage      Int       @default(0) @map("completeness_percentage")
+  completenessPercentage      Float?    @default(0) @map("completeness_percentage")
   
   // USDM storage
   usdmJson                    Json?     @map("usdm_json")
@@ -36,14 +36,7 @@ model Protocol {
   createdBy                   String    @map("created_by") @db.VarChar(100)
   createdAt                   DateTime  @default(now()) @map("created_at")
   updatedBy                   String?   @map("updated_by") @db.VarChar(100)
-  updatedAt                   DateTime  @default(now()) @updatedAt @map("updated_at")
-  
-  // Soft delete
-  deletedAt                   DateTime? @map("deleted_at")
-  
-  // Validation tracking
-  lastValidationId            String?   @map("last_validation_id")
-  lastValidationDate          DateTime? @map("last_validation_date")
+  updatedAt                   DateTime  @updatedAt @map("updated_at")
   
   // Relations
   sections                    ProtocolSection[]
@@ -61,21 +54,19 @@ model ProtocolSection {
   sectionNumber   String    @map("section_number") @db.VarChar(10)
   sectionTitle    String    @map("section_title") @db.VarChar(200)
   sectionType     String    @map("section_type") @db.VarChar(50)
+  orderIndex      Int       @map("order_index")
   
   // Content stored as structured JSON
   content         Json      @default("{}")
   
-  // Tracking
-  isRequired      Boolean   @default(false) @map("is_required")
-  isComplete      Boolean   @default(false) @map("is_complete")
-  orderIndex      Int       @map("order_index")
-  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+  // Metadata
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
   
   // Relations
   protocol        Protocol  @relation(fields: [protocolId], references: [id], onDelete: Cascade)
   
-  @@unique([protocolId, sectionNumber], name: "unique_protocol_section")
-  @@index([protocolId])
+  @@unique([protocolId, sectionNumber])
   @@map("protocol_sections")
 }
 
@@ -90,13 +81,13 @@ model Objective {
   estimand        Json?
   rationale       String?   @db.Text
   
+  // Metadata
   createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
   
   // Relations
   protocol        Protocol  @relation(fields: [protocolId], references: [id], onDelete: Cascade)
   
-  @@index([protocolId])
   @@map("objectives")
 }
 
@@ -107,16 +98,14 @@ model EligibilityCriterion {
   criterionNumber String    @map("criterion_number") @db.VarChar(10)
   criterionText   String    @map("criterion_text") @db.Text
   orderIndex      Int       @map("order_index")
-  isCritical      Boolean   @default(false) @map("is_critical")
   
+  // Metadata
   createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
   
   // Relations
   protocol        Protocol  @relation(fields: [protocolId], references: [id], onDelete: Cascade)
   
-  @@unique([protocolId, criterionType, criterionNumber], name: "unique_protocol_criterion")
-  @@index([protocolId])
   @@map("eligibility_criteria")
 }
 
@@ -132,14 +121,15 @@ model Intervention {
   frequency               String?   @db.VarChar(100)
   duration                String?   @db.VarChar(100)
   rationale               String?   @db.Text
+  orderIndex              Int       @map("order_index")
   
+  // Metadata
   createdAt               DateTime  @default(now()) @map("created_at")
-  updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
   
   // Relations
   protocol                Protocol  @relation(fields: [protocolId], references: [id], onDelete: Cascade)
   
-  @@index([protocolId])
   @@map("interventions")
 }
 
@@ -152,12 +142,14 @@ model ControlledTerminology {
   parentCode      String?   @map("parent_code") @db.VarChar(50)
   isActive        Boolean   @default(true) @map("is_active")
   
-  @@unique([domain, code], name: "unique_domain_code")
-  @@index([domain])
-  @@map("controlled_terminologies")
+  // Metadata
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  @@unique([domain, code])
+  @@map("controlled_terminology")
 }
 
-// Validation Rules Configuration
 model ValidationRule {
   id          String   @id @default(uuid())
   ruleId      String   @unique @map("rule_id") @db.VarChar(50)
@@ -166,23 +158,23 @@ model ValidationRule {
   severity    String   @db.VarChar(20) // "error", "warning", "info"
   description String   @db.Text
   section     String?  @db.VarChar(10) // M11 section number this rule applies to
-  isEnabled   Boolean  @default(true) @map("is_enabled")
+  isActive    Boolean  @default(true) @map("is_active")
   
+  // Metadata
   createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
   
-  @@index([category])
-  @@index([severity])
   @@map("validation_rules")
 }
 
-// Validation Results Storage
 model ValidationResult {
   id                String   @id @default(uuid())
   protocolId        String   @map("protocol_id")
   validationDate    DateTime @default(now()) @map("validation_date")
   overallStatus     String   @map("overall_status") @db.VarChar(50) // "valid", "invalid", "valid_with_warnings"
-  completenessScore Int      @default(0) @map("completeness_score")
+  totalIssues       Int      @default(0) @map("total_issues")
+  errorCount        Int      @default(0) @map("error_count")
+  warningCount      Int      @default(0) @map("warning_count")
   
   // Results as JSON
   results           Json     // Array of validation issues
@@ -191,7 +183,131 @@ model ValidationResult {
   // Relations
   protocol          Protocol @relation(fields: [protocolId], references: [id], onDelete: Cascade)
   
-  @@index([protocolId])
-  @@index([validationDate])
   @@map("validation_results")
+}
+
+// Authentication & User Management Models
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique @db.VarChar(255)
+  passwordHash      String    @map("password_hash") @db.VarChar(255)
+  firstName         String    @map("first_name") @db.VarChar(100)
+  lastName          String    @map("last_name") @db.VarChar(100)
+  title             String?   @db.VarChar(50) // Dr., Prof., etc.
+  specialty         String?   @db.VarChar(100) // Cardiology, Oncology, etc.
+  institution       String?   @db.VarChar(255)
+  licenseNumber     String?   @map("license_number") @db.VarChar(100)
+  phone             String?   @db.VarChar(20)
+  country           String    @default("India") @db.VarChar(100)
+  state             String?   @db.VarChar(100)
+  city              String?   @db.VarChar(100)
+  role              String    @default("researcher") @db.VarChar(50) // researcher, admin, viewer
+  emailVerified     Boolean   @default(false) @map("email_verified")
+  profileImageUrl   String?   @map("profile_image_url") @db.Text
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  lastLoginAt       DateTime? @map("last_login_at")
+  isActive          Boolean   @default(true) @map("is_active")
+  
+  // Relations
+  sessions                    Session[]
+  notifications               Notification[]
+  preferences                 UserPreferences?
+  passwordResetTokens         PasswordResetToken[]
+  emailVerificationTokens     EmailVerificationToken[]
+  
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Session {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  token         String    @unique @db.VarChar(500)
+  refreshToken  String?   @unique @map("refresh_token") @db.VarChar(500)
+  expiresAt     DateTime  @map("expires_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  ipAddress     String?   @map("ip_address") @db.VarChar(45)
+  userAgent     String?   @map("user_agent") @db.Text
+  isActive      Boolean   @default(true) @map("is_active")
+  
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([token])
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Notification {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  type        String    @db.VarChar(50) // protocol_update, trial_match, system, comment, mention
+  title       String    @db.VarChar(255)
+  message     String    @db.Text
+  link        String?   @db.VarChar(500) // URL to navigate when clicked
+  isRead      Boolean   @default(false) @map("is_read")
+  priority    String    @default("normal") @db.VarChar(20) // low, normal, high, urgent
+  createdAt   DateTime  @default(now()) @map("created_at")
+  readAt      DateTime? @map("read_at")
+  
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+model UserPreferences {
+  id                  String    @id @default(uuid())
+  userId              String    @unique @map("user_id")
+  emailNotifications  Boolean   @default(true) @map("email_notifications")
+  pushNotifications   Boolean   @default(true) @map("push_notifications")
+  trialAlerts         Boolean   @default(true) @map("trial_alerts")
+  protocolUpdates     Boolean   @default(true) @map("protocol_updates")
+  weeklyDigest        Boolean   @default(true) @map("weekly_digest")
+  theme               String    @default("light") @db.VarChar(20) // light, dark, auto
+  language            String    @default("en") @db.VarChar(10)
+  timezone            String    @default("Asia/Kolkata") @db.VarChar(50)
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_preferences")
+}
+
+model PasswordResetToken {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  token       String    @unique @db.VarChar(500)
+  expiresAt   DateTime  @map("expires_at")
+  used        Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([token])
+  @@map("password_reset_tokens")
+}
+
+model EmailVerificationToken {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  token       String    @unique @db.VarChar(500)
+  expiresAt   DateTime  @map("expires_at")
+  used        Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([token])
+  @@map("email_verification_tokens")
 }

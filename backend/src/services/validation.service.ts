@@ -30,64 +30,103 @@ export interface ValidationReport {
 // ==================== M11 CONFORMANCE RULES ====================
 export class ValidationEngine {
   async validateProtocol(protocolId: string): Promise<ValidationReport> {
-    const protocol = await prisma.protocol.findUnique({
-      where: { id: protocolId },
-      include: {
-        sections: true,
-        objectives: true,
-        eligibilityCriteria: true,
-        interventions: true
+    try {
+      const protocol = await prisma.protocol.findUnique({
+        where: { id: protocolId },
+        include: {
+          sections: true,
+          objectives: true,
+          eligibilityCriteria: true,
+          interventions: true
+        }
+      });
+
+      if (!protocol) {
+        throw new Error('Protocol not found');
       }
-    });
 
-    if (!protocol) {
-      throw new Error('Protocol not found');
+      const issues: ValidationIssue[] = [];
+
+      // Run all validation rule categories with error handling
+      try {
+        issues.push(...this.validateM11Conformance(protocol));
+      } catch (error) {
+        console.error('Error in validateM11Conformance:', error);
+      }
+
+      try {
+        issues.push(...this.validateAdvancedM11Rules(protocol));
+      } catch (error) {
+        console.error('Error in validateAdvancedM11Rules:', error);
+      }
+
+      try {
+        issues.push(...this.validateCrossSectionDependencies(protocol));
+      } catch (error) {
+        console.error('Error in validateCrossSectionDependencies:', error);
+      }
+
+      try {
+        issues.push(...this.validateGCPRequirements(protocol));
+      } catch (error) {
+        console.error('Error in validateGCPRequirements:', error);
+      }
+
+      try {
+        issues.push(...this.validateIndiaSpecificRules(protocol));
+      } catch (error) {
+        console.error('Error in validateIndiaSpecificRules:', error);
+      }
+
+      try {
+        issues.push(...this.applyConditionalValidation(protocol, issues));
+      } catch (error) {
+        console.error('Error in applyConditionalValidation:', error);
+      }
+
+      // Calculate section status
+      const sectionStatus = this.calculateSectionStatus(protocol, issues);
+
+      // Determine overall status
+      const totalErrors = issues.filter(i => i.severity === 'error').length;
+      const totalWarnings = issues.filter(i => i.severity === 'warning').length;
+      const totalInfo = issues.filter(i => i.severity === 'info').length;
+
+      let overallStatus: 'valid' | 'invalid' | 'valid_with_warnings' = 'valid';
+      if (totalErrors > 0) {
+        overallStatus = 'invalid';
+      } else if (totalWarnings > 0) {
+        overallStatus = 'valid_with_warnings';
+      }
+
+      // Get completeness score
+      const completenessScore = protocol.completenessPercentage || 0;
+
+      const report: ValidationReport = {
+        protocolId,
+        validationDate: new Date().toISOString(),
+        overallStatus,
+        completenessScore,
+        totalErrors,
+        totalWarnings,
+        totalInfo,
+        issues,
+        sectionStatus
+      };
+
+      // Store validation result
+      try {
+        await this.storeValidationResult(report);
+      } catch (error) {
+        console.error('Error storing validation result:', error);
+        // Continue even if storage fails
+      }
+
+      return report;
+    } catch (error) {
+      console.error('Error in validateProtocol:', error);
+      throw error;
     }
-
-    const issues: ValidationIssue[] = [];
-
-    // Run all validation rule categories
-    issues.push(...this.validateM11Conformance(protocol));
-    issues.push(...this.validateAdvancedM11Rules(protocol));
-    issues.push(...this.validateCrossSectionDependencies(protocol));
-    issues.push(...this.validateGCPRequirements(protocol));
-    issues.push(...this.validateIndiaSpecificRules(protocol));
-    issues.push(...this.applyConditionalValidation(protocol, issues));
-
-    // Calculate section status
-    const sectionStatus = this.calculateSectionStatus(protocol, issues);
-
-    // Determine overall status
-    const totalErrors = issues.filter(i => i.severity === 'error').length;
-    const totalWarnings = issues.filter(i => i.severity === 'warning').length;
-    const totalInfo = issues.filter(i => i.severity === 'info').length;
-
-    let overallStatus: 'valid' | 'invalid' | 'valid_with_warnings' = 'valid';
-    if (totalErrors > 0) {
-      overallStatus = 'invalid';
-    } else if (totalWarnings > 0) {
-      overallStatus = 'valid_with_warnings';
-    }
-
-    // Get completeness score
-    const completenessScore = protocol.completenessPercentage || 0;
-
-    const report: ValidationReport = {
-      protocolId,
-      validationDate: new Date().toISOString(),
-      overallStatus,
-      completenessScore,
-      totalErrors,
-      totalWarnings,
-      totalInfo,
-      issues,
-      sectionStatus
-    };
-
-    // Store validation result
-    await this.storeValidationResult(report);
-
-    return report;
   }
 
   // ==================== M11 CONFORMANCE RULES ====================
@@ -947,24 +986,36 @@ export class ValidationEngine {
 
   // ==================== STORE VALIDATION RESULT ====================
   private async storeValidationResult(report: ValidationReport): Promise<void> {
-    await prisma.validationResult.create({
-      data: {
-        protocolId: report.protocolId,
-        validationDate: new Date(report.validationDate),
-        overallStatus: report.overallStatus,
-        completenessScore: report.completenessScore,
-        results: report.issues as any,
-        sectionStatus: report.sectionStatus as any
-      }
-    });
+    try {
+      // Ensure JSON serialization works properly
+      const resultsJson = JSON.parse(JSON.stringify(report.issues));
+      const sectionStatusJson = JSON.parse(JSON.stringify(report.sectionStatus));
 
-    // Update protocol with last validation info
-    await prisma.protocol.update({
-      where: { id: report.protocolId },
-      data: {
-        lastValidationDate: new Date(report.validationDate)
-      }
-    });
+      await prisma.validationResult.create({
+        data: {
+          protocolId: report.protocolId,
+          validationDate: new Date(report.validationDate),
+          overallStatus: report.overallStatus,
+          totalIssues: report.issues.length,
+          errorCount: report.totalErrors,
+          warningCount: report.totalWarnings,
+          results: resultsJson,
+          sectionStatus: sectionStatusJson
+        }
+      });
+
+      // Update protocol with last validation info and completeness
+      await prisma.protocol.update({
+        where: { id: report.protocolId },
+        data: {
+          lastValidationDate: new Date(report.validationDate),
+          completenessPercentage: report.completenessScore
+        }
+      });
+    } catch (error) {
+      console.error('Error in storeValidationResult:', error);
+      throw error;
+    }
   }
 }
 

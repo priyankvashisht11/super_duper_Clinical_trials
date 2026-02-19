@@ -15,6 +15,10 @@ import {
 import { useProtocol } from '../../../contexts/ProtocolContext';
 import { useValidation } from '../../../hooks/useValidation';
 import { colors } from '../../../styles/theme';
+import { AICoPilotProvider } from '../../../contexts/AICoPilotContext';
+import { AIEnhancedInput } from '../../ai/AIEnhancedInput';
+import { AIFieldAssist } from '../../ai/AIFieldAssist';
+import { AICoPilotSidebar } from '../../ai/AICoPilotSidebar';
 
 const StyledCard = styled(Card)(() => ({
   background: `linear-gradient(135deg, ${colors.primary.light}15 0%, ${colors.secondary.light}15 100%)`,
@@ -142,9 +146,12 @@ export const InterventionsEditor: React.FC = () => {
   };
 
   return (
-    <Box>
-      {/* Header */}
-      <StyledCard sx={{ mb: 3 }}>
+    <AICoPilotProvider>
+      <Box sx={{ display: 'flex', gap: 3 }}>
+        {/* Left Column - Main Content */}
+        <Box sx={{ flex: 1 }}>
+          {/* Header */}
+          <StyledCard sx={{ mb: 3 }}>
         <CardContent>
           <Box display="flex" alignItems="center" gap={2} mb={2}>
             <MedicationIcon sx={{ fontSize: 40, color: colors.primary.main }} />
@@ -179,7 +186,19 @@ export const InterventionsEditor: React.FC = () => {
 
       {/* Interventions List */}
       {interventions.length === 0 ? (
-        <Alert severity="info" icon={<ScienceIcon />}>
+        <Alert 
+          severity="info" 
+          icon={<ScienceIcon />}
+          sx={{ 
+            backgroundColor: '#e3f2fd',
+            border: '2px solid #2196f3',
+            '& .MuiAlert-icon': { color: '#1976d2' },
+            '& .MuiAlert-message': { 
+              color: '#0d47a1',
+              '& .MuiTypography-root': { color: '#0d47a1', fontWeight: 600 }
+            }
+          }}
+        >
           No interventions defined yet. Click "Add Intervention" to define your first intervention.
         </Alert>
       ) : (
@@ -306,36 +325,77 @@ export const InterventionsEditor: React.FC = () => {
               </Select>
             </FormControl>
 
-            <TextField
-              fullWidth
-              label="Product Name *"
-              value={currentIntervention.productName}
-              onChange={(e) => setCurrentIntervention({
-                ...currentIntervention,
-                productName: e.target.value
-              })}
-            />
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+              <AIEnhancedInput
+                fieldName="productName"
+                fieldType="intervention"
+                sectionNumber="5"
+                protocolContext={protocol}
+                value={currentIntervention.productName}
+                onChange={(value: string) => setCurrentIntervention({
+                  ...currentIntervention,
+                  productName: value
+                })}
+                label="Product Name *"
+                required
+                placeholder="e.g., Drug X 50mg tablets"
+              />
+              <AIFieldAssist
+                fieldName="productName"
+                fieldValue={currentIntervention.productName}
+                sectionNumber="5"
+                protocolContext={protocol}
+                onSuggestionSelect={(value: string) => setCurrentIntervention({
+                  ...currentIntervention,
+                  productName: value
+                })}
+              />
+            </Box>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
-              <TextField
-                fullWidth
-                label="Dose"
-                value={currentIntervention.dose || ''}
-                onChange={(e) => setCurrentIntervention({
-                  ...currentIntervention,
-                  dose: e.target.value
-                })}
-              />
-              <TextField
-                fullWidth
-                label="Dose Unit"
-                value={currentIntervention.doseUnit || ''}
-                onChange={(e) => setCurrentIntervention({
-                  ...currentIntervention,
-                  doseUnit: e.target.value
-                })}
-                placeholder="mg, mL, IU, etc."
-              />
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                <TextField
+                  fullWidth
+                  label="Dose"
+                  value={currentIntervention.dose || ''}
+                  onChange={(e) => setCurrentIntervention({
+                    ...currentIntervention,
+                    dose: e.target.value
+                  })}
+                />
+                <AIFieldAssist
+                  fieldName="dose"
+                  fieldValue={currentIntervention.dose || ''}
+                  sectionNumber="5"
+                  protocolContext={protocol}
+                  onSuggestionSelect={(value: string) => setCurrentIntervention({
+                    ...currentIntervention,
+                    dose: value
+                  })}
+                />
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                <TextField
+                  fullWidth
+                  label="Dose Unit"
+                  value={currentIntervention.doseUnit || ''}
+                  onChange={(e) => setCurrentIntervention({
+                    ...currentIntervention,
+                    doseUnit: e.target.value
+                  })}
+                  placeholder="mg, mL, IU, etc."
+                />
+                <AIFieldAssist
+                  fieldName="doseUnit"
+                  fieldValue={currentIntervention.doseUnit || ''}
+                  sectionNumber="5"
+                  protocolContext={protocol}
+                  onSuggestionSelect={(value: string) => setCurrentIntervention({
+                    ...currentIntervention,
+                    doseUnit: value
+                  })}
+                />
+              </Box>
             </Box>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
@@ -380,18 +440,33 @@ export const InterventionsEditor: React.FC = () => {
               placeholder="12 weeks, until progression, etc."
             />
 
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              label="Rationale"
-              value={currentIntervention.rationale || ''}
-              onChange={(e) => setCurrentIntervention({
-                ...currentIntervention,
-                rationale: e.target.value
-              })}
-              placeholder="Rationale for this intervention..."
-            />
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+              <AIEnhancedInput
+                fieldName="interventionRationale"
+                fieldType="intervention"
+                sectionNumber="5"
+                protocolContext={protocol}
+                value={currentIntervention.rationale || ''}
+                onChange={(value: string) => setCurrentIntervention({
+                  ...currentIntervention,
+                  rationale: value
+                })}
+                label="Rationale"
+                multiline
+                rows={3}
+                placeholder="Scientific rationale for selecting this intervention..."
+              />
+              <AIFieldAssist
+                fieldName="rationale"
+                fieldValue={currentIntervention.rationale || ''}
+                sectionNumber="5"
+                protocolContext={protocol}
+                onSuggestionSelect={(value: string) => setCurrentIntervention({
+                  ...currentIntervention,
+                  rationale: value
+                })}
+              />
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>
@@ -405,6 +480,13 @@ export const InterventionsEditor: React.FC = () => {
           </GradientButton>
         </DialogActions>
       </Dialog>
-    </Box>
+        </Box>
+
+        {/* Right Column - AI Co-Pilot Sidebar */}
+        <Box sx={{ width: 350, flexShrink: 0 }}>
+          <AICoPilotSidebar />
+        </Box>
+      </Box>
+    </AICoPilotProvider>
   );
 };

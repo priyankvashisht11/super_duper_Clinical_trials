@@ -193,7 +193,7 @@ export function SettingsPage() {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="Current Password"
@@ -217,7 +217,7 @@ export function SettingsPage() {
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="New Password"
@@ -264,7 +264,7 @@ export function SettingsPage() {
               )}
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="Confirm New Password"
@@ -288,7 +288,7 @@ export function SettingsPage() {
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Button
                 variant="contained"
                 startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
@@ -320,7 +320,7 @@ export function SettingsPage() {
           </Typography>
 
           <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -337,7 +337,7 @@ export function SettingsPage() {
               </Typography>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -354,7 +354,7 @@ export function SettingsPage() {
               </Typography>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -369,7 +369,7 @@ export function SettingsPage() {
               </Typography>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -386,7 +386,7 @@ export function SettingsPage() {
               </Typography>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -401,7 +401,7 @@ export function SettingsPage() {
               </Typography>
             </Grid>
 
-            <Grid item xs={12} sx={{ mt: 2 }}>
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
               <Button
                 variant="contained"
                 startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
@@ -421,7 +421,7 @@ export function SettingsPage() {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 select
                 fullWidth
@@ -435,7 +435,7 @@ export function SettingsPage() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 select
                 fullWidth
@@ -449,7 +449,7 @@ export function SettingsPage() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 select
                 fullWidth
@@ -464,7 +464,7 @@ export function SettingsPage() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Button
                 variant="contained"
                 startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}

@@ -16,6 +16,10 @@ export interface User {
   profileImageUrl?: string;
   createdAt?: string;
   lastLoginAt?: string;
+  phone?: string;
+  country?: string;
+  state?: string;
+  city?: string;
 }
 
 export interface AuthResponse {

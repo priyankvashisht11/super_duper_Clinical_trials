@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -175,7 +175,7 @@ export function ProfilePage() {
         {/* Profile Photo */}
         <Box display="flex" alignItems="center" gap={3} mb={4}>
           <Avatar
-            src={user.profileImageUrl}
+            {...(user.profileImageUrl ? { src: user.profileImageUrl } : {})}
             sx={{
               width: 100,
               height: 100,
@@ -209,7 +209,7 @@ export function ProfilePage() {
         </Typography>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="First Name"
@@ -220,7 +220,7 @@ export function ProfilePage() {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Last Name"
@@ -231,7 +231,7 @@ export function ProfilePage() {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               select
               fullWidth
@@ -248,7 +248,7 @@ export function ProfilePage() {
             </TextField>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Phone"
@@ -267,7 +267,7 @@ export function ProfilePage() {
         </Typography>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               select
               fullWidth
@@ -284,7 +284,7 @@ export function ProfilePage() {
             </TextField>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="License Number"
@@ -294,7 +294,7 @@ export function ProfilePage() {
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               label="Institution"
@@ -313,7 +313,7 @@ export function ProfilePage() {
         </Typography>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="Country"
@@ -323,7 +323,7 @@ export function ProfilePage() {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="State"
@@ -333,7 +333,7 @@ export function ProfilePage() {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="City"
@@ -352,7 +352,7 @@ export function ProfilePage() {
         </Typography>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Email"
@@ -362,7 +362,7 @@ export function ProfilePage() {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Role"
@@ -372,7 +372,7 @@ export function ProfilePage() {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Email Verified"
@@ -381,7 +381,7 @@ export function ProfilePage() {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Member Since"

@@ -30,7 +30,7 @@ const PageHeader = styled(Box)(({ theme }) => ({
   border: `1px solid ${alpha(colors.primary.main, 0.1)}`,
 }));
 
-const TrialCard = styled(Card)(({ theme }) => ({
+const TrialCard = styled(Card)(() => ({
   transition: 'all 0.3s ease',
   border: `1px solid ${alpha(colors.primary.main, 0.1)}`,
   position: 'relative',
@@ -41,7 +41,7 @@ const TrialCard = styled(Card)(({ theme }) => ({
   },
 }));
 
-const BookmarkButton = styled(IconButton)(({ theme }) => ({
+const BookmarkButton = styled(IconButton)(() => ({
   position: 'absolute',
   top: 12,
   right: 12,
@@ -188,7 +188,7 @@ export const BookmarksPage: React.FC = () => {
         <Card sx={{ mb: 3, background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`, color: '#fff' }}>
           <CardContent>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Typography variant="h3" fontWeight={700}>
                   {bookmarkedTrials.length}
                 </Typography>
@@ -196,7 +196,7 @@ export const BookmarksPage: React.FC = () => {
                   Total Bookmarks
                 </Typography>
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Typography variant="h3" fontWeight={700}>
                   {bookmarkedTrials.filter(t => t.status === 'Recruiting').length}
                 </Typography>
@@ -204,7 +204,7 @@ export const BookmarksPage: React.FC = () => {
                   Currently Recruiting
                 </Typography>
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Typography variant="h3" fontWeight={700}>
                   {new Set(bookmarkedTrials.map(t => t.category)).size}
                 </Typography>
@@ -237,7 +237,7 @@ export const BookmarksPage: React.FC = () => {
       {filteredTrials.length > 0 ? (
         <Grid container spacing={3}>
           {filteredTrials.map((trial, index) => (
-            <Grid item xs={12} md={6} key={trial.id}>
+            <Grid size={{ xs: 12, md: 6 }} key={trial.id}>
               <Fade in timeout={600} style={{ transitionDelay: `${index * 100}ms` }}>
                 <TrialCard>
                   <BookmarkButton
@@ -280,7 +280,7 @@ export const BookmarksPage: React.FC = () => {
                     <Divider sx={{ my: 2 }} />
 
                     <Grid container spacing={2}>
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <Typography variant="caption" color="text.secondary" display="block">
                           Condition
                         </Typography>
@@ -288,7 +288,7 @@ export const BookmarksPage: React.FC = () => {
                           {trial.condition}
                         </Typography>
                       </Grid>
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <Typography variant="caption" color="text.secondary" display="block">
                           Location
                         </Typography>
@@ -296,7 +296,7 @@ export const BookmarksPage: React.FC = () => {
                           {trial.location}
                         </Typography>
                       </Grid>
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <Typography variant="caption" color="text.secondary" display="block">
                           Sponsor
                         </Typography>
@@ -304,7 +304,7 @@ export const BookmarksPage: React.FC = () => {
                           {trial.sponsor}
                         </Typography>
                       </Grid>
-                      <Grid item xs={12}>
+                      <Grid size={{ xs: 12 }}>
                         <Typography variant="caption" color="text.secondary">
                           Bookmarked: {new Date(trial.bookmarkedAt).toLocaleDateString()}
                         </Typography>

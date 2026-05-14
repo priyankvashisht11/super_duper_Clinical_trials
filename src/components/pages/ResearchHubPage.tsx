@@ -45,7 +45,7 @@ import {
 import { styled, alpha } from '@mui/material/styles';
 import { colors } from '../../styles/theme';
 
-const PageHeader = styled(Box)(() => ({
+const PageHeader = styled(Box)(({ theme }) => ({
   background: `linear-gradient(135deg, ${alpha(colors.primary.light, 0.1)} 0%, ${alpha(colors.secondary.light, 0.05)} 100%)`,
   borderRadius: 16,
   padding: theme.spacing(4),
@@ -81,7 +81,7 @@ const QuickSearchChip = styled(Chip)(({ theme }) => ({
   },
 }));
 
-const SearchButton = styled(Button)(({ theme }) => ({
+const SearchButton = styled(Button)(() => ({
   minWidth: 140,
   height: 56,
   borderRadius: 12,
@@ -380,7 +380,7 @@ export const ResearchHubPage: React.FC = () => {
 
             {/* Filters */}
             <Grid container spacing={2} mb={2}>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Phase</InputLabel>
                   <Select
@@ -396,7 +396,7 @@ export const ResearchHubPage: React.FC = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Status</InputLabel>
                   <Select
@@ -412,7 +412,7 @@ export const ResearchHubPage: React.FC = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
                   fullWidth
                   size="small"
@@ -421,7 +421,7 @@ export const ResearchHubPage: React.FC = () => {
                   onChange={(e) => setFilters({ ...filters, indication: e.target.value })}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Country</InputLabel>
                   <Select
@@ -725,19 +725,19 @@ const ClinicalTrialsResults: React.FC<{ trials: any[] }> = ({ trials }) => {
                 </Box>
 
                 <Grid container spacing={2} mb={2}>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="caption" color="text.secondary">Condition</Typography>
                     <Typography variant="body2" fontWeight={600}>{trial.condition}</Typography>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="caption" color="text.secondary">Intervention</Typography>
                     <Typography variant="body2" fontWeight={600}>{trial.intervention}</Typography>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="caption" color="text.secondary">Sponsor</Typography>
                     <Typography variant="body2">{trial.sponsor}</Typography>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="caption" color="text.secondary">Start Date</Typography>
                     <Typography variant="body2">{trial.startDate || 'N/A'}</Typography>
                   </Grid>
@@ -809,23 +809,23 @@ const ClinicalTrialsResults: React.FC<{ trials: any[] }> = ({ trials }) => {
               <Typography variant="body2" paragraph>{selectedTrial.description || 'No description available'}</Typography>
 
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="subtitle2">Condition</Typography>
                   <Typography variant="body2">{selectedTrial.condition}</Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="subtitle2">Intervention</Typography>
                   <Typography variant="body2">{selectedTrial.intervention}</Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="subtitle2">Enrollment</Typography>
                   <Typography variant="body2">{selectedTrial.enrollment} participants</Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="subtitle2">Sponsor</Typography>
                   <Typography variant="body2">{selectedTrial.sponsor}</Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="subtitle2">Start Date</Typography>
                   <Typography variant="body2">{selectedTrial.startDate || 'N/A'}</Typography>
                 </Grid>
@@ -1281,26 +1281,6 @@ function generateDemoPapers() {
       source: 'PubMed',
     },
   ];
-}
-
-function generateDemoInsights() {
-  return {
-    trialsAnalyzed: 3,
-    commonPatterns: [
-      'Randomized, double-blind, placebo-controlled design is standard for Phase III trials',
-      'Primary endpoints typically focus on HbA1c reduction (diabetes) or progression-free survival (oncology)',
-      'Sample sizes range from 300-750 participants based on expected effect size',
-      'Stratification by baseline characteristics (age, disease severity) is common',
-    ],
-    recommendations: [
-      'Consider a 1:1 randomization ratio for balanced comparison',
-      'Include both efficacy and safety endpoints in your protocol',
-      'Plan for 12-24 month follow-up period based on indication',
-      'Use validated assessment scales and standardized definitions',
-      'Consider adaptive design elements for sample size re-estimation',
-    ],
-    sampleSizes: 'Median sample size: 500 participants (range: 300-750). Power calculations typically assume 80-90% power with alpha=0.05. Consider 10-15% dropout rate in your calculations.',
-  };
 }
 
 // Filter demo trials based on sidebar filters

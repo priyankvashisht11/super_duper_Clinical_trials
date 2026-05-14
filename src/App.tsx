@@ -1,121 +1,112 @@
-import { Routes, Route, useNavigate } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from './components/layout';
-import { 
-  LandingPage, 
-  ResearchHubPageEnhanced as ResearchHubPage, 
-  MyDocumentsPage, 
-  BookmarksPage, 
+import { LandingPage } from './components/pages/LandingPage';
+import {
+  MyDocumentsPage,
+  BookmarksPage,
   AboutPage,
-  ValidationDemoPage,
   ProfilePage,
   SettingsPage,
   HelpSupportPage,
 } from './components/pages';
 import { ProtocolBuilderPage } from './pages/ProtocolBuilderPage';
-import { ProtocolListPage } from './pages/ProtocolListPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { ResearchPage } from './pages/ResearchPage';
+import { RegulatoryPage } from './pages/RegulatoryPage';
+import { PatientMatchPage } from './pages/PatientMatchPage';
+import { EDCPage } from './pages/EDCPage';
+import { AnalysisPage } from './pages/AnalysisPage';
 import { ErrorBoundary, NotificationProvider } from './components/common';
 import { SearchProvider } from './contexts/SearchContext';
 import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
-  const navigate = useNavigate();
-
-  const handleSearch = (query: string) => {
-    console.log('Search query:', query);
-    // Navigate to Research Hub with the search query as state
-    navigate('/search', { state: { searchQuery: query, autoSearch: true } });
-  };
-
-  const handleDemo = () => {
-    console.log('Demo requested');
-  };
-
-  const handleRegister = () => {
-    console.log('Registration requested');
-  };
-
-  const handleFeatureDemo = (featureId: string) => {
-    console.log('Feature demo requested:', featureId);
-  };
-
   return (
     <ErrorBoundary>
       <AuthProvider>
         <NotificationProvider>
           <SearchProvider>
             <Routes>
-      <Route path="/" element={
-        <MainLayout showFilters={false} showDocumentPanel={false}>
-          <LandingPage
-            onSearch={handleSearch}
-            onDemo={handleDemo}
-            onRegister={handleRegister}
-            onFeatureDemo={handleFeatureDemo}
-          />
-        </MainLayout>
-      } />
-      
-      <Route path="/search" element={
-        <MainLayout showFilters={true} showDocumentPanel={true}>
-          <ResearchHubPage />
-        </MainLayout>
-      } />
-      
-      <Route path="/documents" element={
-        <MainLayout showFilters={false} showDocumentPanel={true}>
-          <MyDocumentsPage />
-        </MainLayout>
-      } />
-      
-      <Route path="/bookmarks" element={
-        <MainLayout showFilters={false} showDocumentPanel={false}>
-          <BookmarksPage />
-        </MainLayout>
-      } />
-      
-      <Route path="/protocol-builder" element={<ProtocolListPage />} />
-      
-      <Route path="/protocol-builder/:id/*" element={<ProtocolBuilderPage />} />
-      
-      {/* Legacy route redirects */}
-      <Route path="/protocols" element={<ProtocolListPage />} />
-      <Route path="/protocols/:id/*" element={<ProtocolBuilderPage />} />
-      
-      <Route path="/validation-demo" element={
-        <ValidationDemoPage />
-      } />
-      
-      <Route path="/about" element={
-        <MainLayout showFilters={false} showDocumentPanel={false}>
-          <AboutPage />
-        </MainLayout>
-      } />
+              {/* Public landing */}
+              <Route path="/" element={<LandingPage />} />
 
-      <Route path="/profile" element={
-        <MainLayout showFilters={false} showDocumentPanel={false}>
-          <ProfilePage />
-        </MainLayout>
-      } />
+              {/* Main authenticated dashboard — replaces flat protocol list */}
+              <Route path="/dashboard" element={
+                <MainLayout showFilters={false} showDocumentPanel={false}>
+                  <DashboardPage />
+                </MainLayout>
+              } />
 
-      <Route path="/settings" element={
-        <MainLayout showFilters={false} showDocumentPanel={false}>
-          <SettingsPage />
-        </MainLayout>
-      } />
+              {/* Research Intelligence — Sprint 1 */}
+              <Route path="/research" element={<ResearchPage />} />
 
-      <Route path="/preferences" element={
-        <MainLayout showFilters={false} showDocumentPanel={false}>
-          <SettingsPage />
-        </MainLayout>
-      } />
+              {/* Regulatory Prep — Sprint 3 */}
+              <Route path="/regulatory" element={<RegulatoryPage />} />
 
-      <Route path="/help" element={
-        <MainLayout showFilters={false} showDocumentPanel={false}>
-          <HelpSupportPage />
-        </MainLayout>
-      } />
-        </Routes>
+              {/* Patient-Trial Matching — Sprint 4 */}
+              <Route path="/match" element={<PatientMatchPage />} />
+
+              {/* EDC / Data Collection — Sprint 5 */}
+              <Route path="/edc" element={<EDCPage />} />
+
+              {/* Analysis & Submission — Sprint 6 */}
+              <Route path="/analysis" element={<AnalysisPage />} />
+
+              {/* Protocol builder — will be rebuilt in Sprint 2; kept functional for now */}
+              <Route path="/protocol-builder" element={
+                <MainLayout showFilters={false} showDocumentPanel={false}>
+                  <DashboardPage />
+                </MainLayout>
+              } />
+              <Route path="/protocol-builder/:id/*" element={<ProtocolBuilderPage />} />
+
+              {/* Legacy protocol routes */}
+              <Route path="/protocols" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/protocols/:id/*" element={<ProtocolBuilderPage />} />
+
+              {/* Documents */}
+              <Route path="/documents" element={
+                <MainLayout showFilters={false} showDocumentPanel={true}>
+                  <MyDocumentsPage />
+                </MainLayout>
+              } />
+
+              <Route path="/bookmarks" element={
+                <MainLayout showFilters={false} showDocumentPanel={false}>
+                  <BookmarksPage />
+                </MainLayout>
+              } />
+
+              {/* Secondary pages */}
+              <Route path="/about" element={
+                <MainLayout showFilters={false} showDocumentPanel={false}>
+                  <AboutPage />
+                </MainLayout>
+              } />
+
+              <Route path="/profile" element={
+                <MainLayout showFilters={false} showDocumentPanel={false}>
+                  <ProfilePage />
+                </MainLayout>
+              } />
+
+              <Route path="/settings" element={
+                <MainLayout showFilters={false} showDocumentPanel={false}>
+                  <SettingsPage />
+                </MainLayout>
+              } />
+
+              <Route path="/preferences" element={<Navigate to="/settings" replace />} />
+
+              <Route path="/help" element={
+                <MainLayout showFilters={false} showDocumentPanel={false}>
+                  <HelpSupportPage />
+                </MainLayout>
+              } />
+
+              {/* Catch-all */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
           </SearchProvider>
         </NotificationProvider>
       </AuthProvider>

@@ -1,10 +1,8 @@
 export { LandingPage } from './LandingPage';
 export { ResearchHubPage } from './ResearchHubPage';
-export { default as ResearchHubPageEnhanced } from './ResearchHubPageEnhanced';
 export { MyDocumentsPage } from './MyDocumentsPage';
 export { BookmarksPage } from './BookmarksPage';
 export { AboutPage } from './AboutPage';
-export { ValidationDemoPage } from './ValidationDemoPage';
 export { ProfilePage } from './ProfilePage';
 export { SettingsPage } from './SettingsPage';
 export { HelpSupportPage } from './HelpSupportPage';

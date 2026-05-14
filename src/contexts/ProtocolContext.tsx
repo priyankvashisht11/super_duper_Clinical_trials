@@ -213,13 +213,14 @@ export const ProtocolProvider: React.FC<ProtocolProviderProps> = ({ children, pr
             // Update local protocol state without full refresh
             setProtocol(prev => {
               if (!prev) return prev;
+              const updatedSections = prev.sections?.map(s =>
+                s.sectionNumber === sectionNumber
+                  ? { ...s, content }
+                  : s
+              );
               return {
                 ...prev,
-                sections: prev.sections?.map(s => 
-                  s.sectionNumber === sectionNumber 
-                    ? { ...s, content }
-                    : s
-                )
+                ...(updatedSections !== undefined ? { sections: updatedSections } : {}),
               };
             });
           }

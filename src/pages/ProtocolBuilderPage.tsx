@@ -1,842 +1,730 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Routes, Route, Navigate, useParams as useRouteParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Card, CircularProgress, Fade, IconButton, Tooltip, alpha, Button, Fab, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { Error as ErrorIcon, Visibility, VisibilityOff, Download as DownloadIcon, ContentCopy as ContentCopyIcon, Keyboard as KeyboardIcon, Help as HelpIcon, SmartToy as AIIcon, Delete as DeleteIcon, CheckCircle, Home as HomeIcon, ArrowBack as BackIcon, DriveFileRenameOutline as RenameIcon } from '@mui/icons-material';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
+import {
+  Box, Typography, IconButton, Button, Chip, TextField,
+  CircularProgress, Menu, MenuItem, ListItemIcon, alpha,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+} from '@mui/material';
+import {
+  ArrowBack as BackIcon,
+  MoreVert as MoreIcon,
+  AutoAwesome as AIIcon,
+  Delete as DeleteIcon,
+  DriveFileRenameOutline as RenameIcon,
+  FileDownload as ExportIcon,
+  Send as SendIcon,
+  ChevronRight as NextIcon,
+  ChevronLeft as PrevIcon,
+} from '@mui/icons-material';
 import { ProtocolProvider, useProtocol } from '../contexts/ProtocolContext';
-import { SectionNav, ProtocolMetadataFormEnhanced, ExportManager, CloneProtocolDialog } from '../components/protocol-builder';
-import { ValidationStatusBar } from '../components/protocol-builder/ValidationStatusBar';
-import { ObjectivesEditor, EligibilityEditor, InterventionsEditor, IntroductionEditor, TrialDesignEditor, AssessmentsEditor, StatisticsEditor, ProtocolSummaryEditor, DiscontinuationEditor, AdverseEventsEditor, TrialOversightEditor, AppendicesEditor, GlossaryEditor, ReferencesEditor } from '../components/protocol-builder/sections';
-import { ValidationPanel } from '../components/validation/ValidationPanel';
-import { AIAssistantPanel, AISmartSuggestions } from '../components/ai';
-import { useValidation } from '../hooks/useValidation';
-import { KeyboardShortcuts, useKeyboardShortcuts, UserGuide } from '../components/common';
-import { useNotification } from '../hooks/useNotification';
-import { colors } from '../styles/theme';
 
-const BuilderContainer = styled(Box)({
-  display: 'flex',
-  height: '100vh',
-  background: `linear-gradient(135deg, ${alpha(colors.primary.light, 0.03)} 0%, ${alpha(colors.secondary.light, 0.02)} 100%)`,
-  overflow: 'hidden',
-});
+// ── Section definitions ───────────────────────────────────────────────────────
 
-const SidebarContainer = styled(Box)(() => ({
-  width: 280,
-  flexShrink: 0,
-  background: '#ffffff',
-  borderRight: `1px solid ${alpha(colors.primary.main, 0.1)}`,
-  boxShadow: `4px 0 12px ${alpha(colors.primary.main, 0.05)}`,
-  overflowY: 'auto',
-  zIndex: 10,
-}));
+const SECTIONS = [
+  { number: '1',  title: 'Protocol Summary',        group: 'Foundation',          description: 'High-level synopsis — population, intervention, primary endpoint, design rationale.', tags: ['ICH M11 §1', 'CDSCO'] },
+  { number: '2',  title: 'Introduction',             group: 'Foundation',          description: 'Disease background, burden in India, current standard of care, and unmet need this trial addresses.', tags: ['ICH M11 §2', 'GCP'] },
+  { number: '3',  title: 'Objectives & Estimands',  group: 'Foundation',          description: 'Primary, secondary and exploratory objectives with estimands per ICH E9(R1).', tags: ['ICH M11 §3', 'ICH E9(R1)'] },
+  { number: '4',  title: 'Trial Design',             group: 'Foundation',          description: 'Overall design, randomisation, blinding, treatment arms, visit schedule, and trial schema.', tags: ['ICH M11 §4', 'ICMR'] },
+  { number: '5',  title: 'Trial Population',         group: 'Patient & Treatment', description: 'Inclusion and exclusion criteria for participant eligibility. Include India-specific considerations.', tags: ['ICH M11 §5', 'CTRI'] },
+  { number: '6',  title: 'Trial Intervention',       group: 'Patient & Treatment', description: 'Investigational product, dose, route, frequency, duration. Comparator and rescue medication.', tags: ['ICH M11 §6', 'CDSCO'] },
+  { number: '7',  title: 'Discontinuation',          group: 'Patient & Treatment', description: 'Rules for stopping a participant or the whole trial. Withdrawal procedures.', tags: ['ICH M11 §7', 'GCP'] },
+  { number: '8',  title: 'Trial Assessments',        group: 'Data & Analysis',     description: 'Schedule of assessments — efficacy, safety, biomarkers, PK/PD, PRO instruments.', tags: ['ICH M11 §8'] },
+  { number: '9',  title: 'Adverse Events',           group: 'Data & Analysis',     description: 'AE/SAE definitions, grading, collection procedures, causality, SUSAR reporting to CDSCO.', tags: ['ICH M11 §9', 'ICMR', 'CDSCO'] },
+  { number: '10', title: 'Statistical Plan',         group: 'Data & Analysis',     description: 'Analysis populations, endpoints, statistical methods, multiplicity, sample size justification.', tags: ['ICH M11 §10', 'ICH E9'] },
+  { number: '11', title: 'Trial Oversight',          group: 'Governance',          description: 'Regulatory context, ethics committee (IEC), data protection, insurance, audit plan.', tags: ['ICH M11 §11', 'GCP', 'ICMR'] },
+  { number: '12', title: 'Appendices',               group: 'Governance',          description: 'Supplementary materials, informed consent forms, questionnaires, other supporting documents.', tags: ['ICH M11 §12'] },
+  { number: '13', title: 'Glossary',                 group: 'Governance',          description: 'Definitions of key terms, abbreviations and acronyms used in the protocol.', tags: ['ICH M11 §13'] },
+  { number: '14', title: 'References',               group: 'Governance',          description: 'Bibliography — clinical, regulatory, and epidemiological references cited in the protocol.', tags: ['ICH M11 §14'] },
+] as const;
 
-const MainContent = styled(Box)({
-  flex: 1,
-  overflowY: 'auto',
-  display: 'flex',
-  flexDirection: 'column',
-});
+type SectionDef = typeof SECTIONS[number];
 
-const HeaderCard = styled(Card)(() => ({
-  margin: 24,
-  padding: 24,
-  background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-  border: `1px solid ${alpha(colors.primary.main, 0.1)}`,
-  borderRadius: 16,
-  boxShadow: `0 4px 12px ${alpha(colors.primary.main, 0.08)}`,
-}));
+const GROUPS = ['Foundation', 'Patient & Treatment', 'Data & Analysis', 'Governance'] as const;
 
-const ContentCard = styled(Card)(() => ({
-  margin: '0 24px 24px 24px',
-  padding: 32,
-  background: '#ffffff',
-  border: `1px solid ${alpha(colors.primary.main, 0.1)}`,
-  borderRadius: 16,
-  boxShadow: `0 4px 12px ${alpha(colors.primary.main, 0.08)}`,
-}));
+// ── Section nav item ──────────────────────────────────────────────────────────
 
-const ValidationSidebar = styled(Box)(() => ({
-  width: 400,
-  flexShrink: 0,
-  background: '#ffffff',
-  borderLeft: `1px solid ${alpha(colors.primary.main, 0.1)}`,
-  boxShadow: `-4px 0 12px ${alpha(colors.primary.main, 0.05)}`,
-  overflowY: 'auto',
-  zIndex: 10,
-}));
+const NavItem: React.FC<{
+  section: SectionDef;
+  active: boolean;
+  filled: boolean;
+  onClick: () => void;
+}> = ({ section, active, filled, onClick }) => (
+  <Box
+    onClick={onClick}
+    sx={{
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: 1.5,
+      px: 2,
+      py: 1.25,
+      cursor: 'pointer',
+      borderLeft: active ? '2px solid #0047AB' : '2px solid transparent',
+      backgroundColor: active ? alpha('#0047AB', 0.06) : 'transparent',
+      '&:hover': { backgroundColor: active ? alpha('#0047AB', 0.08) : alpha('#0047AB', 0.03) },
+      transition: 'background 0.15s',
+    }}
+  >
+    <Box
+      sx={{
+        width: 8,
+        height: 8,
+        borderRadius: '50%',
+        flexShrink: 0,
+        mt: 0.6,
+        backgroundColor: filled ? '#059669' : active ? '#0047AB' : '#D0D9E8',
+        transition: 'background 0.2s',
+      }}
+    />
+    <Box>
+      <Typography sx={{ fontSize: '0.68rem', color: '#90A4AE', fontWeight: 700, lineHeight: 1, letterSpacing: '0.04em' }}>
+        §{section.number}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: '0.82rem',
+          color: active ? '#0047AB' : '#3D4E63',
+          fontWeight: active ? 600 : 400,
+          lineHeight: 1.35,
+          mt: 0.25,
+        }}
+      >
+        {section.title}
+      </Typography>
+    </Box>
+  </Box>
+);
 
-const ProgressCircle = styled(Box)({
-  position: 'relative',
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-});
+// ── Section workspace ─────────────────────────────────────────────────────────
 
-const ValidationToggle = styled(IconButton)(() => ({
-  background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
-  color: '#ffffff',
-  padding: 12,
-  boxShadow: `0 4px 12px ${alpha(colors.primary.main, 0.3)}`,
-  
-  '&:hover': {
-    background: `linear-gradient(135deg, ${colors.primary.dark} 0%, ${colors.secondary.dark} 100%)`,
-    boxShadow: `0 6px 16px ${alpha(colors.primary.main, 0.4)}`,
-    transform: 'scale(1.05)',
-  },
-  
-  '&.active': {
-    background: `linear-gradient(135deg, ${colors.semantic.success} 0%, ${colors.semantic.info} 100%)`,
-  },
-}));
-
-// Section Content Component
-const SectionContent: React.FC = () => {
-  const { sectionNumber } = useRouteParams<{ sectionNumber: string }>();
-  
-  switch (sectionNumber) {
-    case '1':
-      return <ProtocolSummaryEditor />;
-    case '2':
-      return <IntroductionEditor />;
-    case '3':
-      return <ObjectivesEditor />;
-    case '4':
-      return <TrialDesignEditor />;
-    case '5':
-      return <EligibilityEditor />;
-    case '6':
-      return <InterventionsEditor />;
-    case '7':
-      return <DiscontinuationEditor />;
-    case '8':
-      return <AssessmentsEditor />;
-    case '9':
-      return <AdverseEventsEditor />;
-    case '10':
-      return <StatisticsEditor />;
-    case '11':
-      return <TrialOversightEditor />;
-    case '12':
-      return <AppendicesEditor />;
-    case '13':
-      return <GlossaryEditor />;
-    case '14':
-      return <ReferencesEditor />;
-    default:
-      return (
-        <Card sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="h6" gutterBottom>
-            Section {sectionNumber} Editor
-          </Typography>
-          <Typography color="text.secondary">
-            Editor for this section coming in next phase...
-          </Typography>
-        </Card>
-      );
-  }
-};
-
-const ProtocolBuilderContent: React.FC = () => {
-  const { protocol, loading, error, saving, lastSaved, updateProtocol } = useProtocol();
-  const [showValidation, setShowValidation] = useState(false);
-  const [validationReport, setValidationReport] = useState<any>(null);
-  const [validationLoading, setValidationLoading] = useState(false);
-  const [sectionStatus, setSectionStatus] = useState<any>({});
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
-  const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const [guideOpen, setGuideOpen] = useState(false);
-  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(true);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [newProtocolName, setNewProtocolName] = useState('');
+const SectionWorkspace: React.FC<{ sectionNum: string }> = ({ sectionNum }) => {
+  const { protocol, autoSaveSection } = useProtocol();
   const navigate = useNavigate();
-  const notification = useNotification();
-  const { sectionNumber } = useRouteParams();
-  
-  // Validation hook
-  const { validateProtocol } = useValidation();
+  const { id } = useParams<{ id: string }>();
 
-  // Keyboard shortcuts
-  useKeyboardShortcuts({
-    onSave: () => {
-      notification.info('Auto-save active - changes saved automatically');
-    },
-    onExport: () => setExportDialogOpen(true),
-    onNew: () => navigate('/protocol-builder'),
-    onHelp: () => setShortcutsOpen(true)
-  });
+  const sectionDef = SECTIONS.find(s => s.number === sectionNum);
+  const protocolSection = protocol?.sections?.find(s => s.sectionNumber === sectionNum);
 
-  // AI Assistant keyboard shortcut (Ctrl/Cmd + Shift + A)
+  const [text, setText] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [aiQuery, setAiQuery] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResponse, setAiResponse] = useState('');
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync section content when section changes
   useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
-        e.preventDefault();
-        setAiAssistantOpen(true);
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
+    const content = protocolSection?.content;
+    setText(typeof content?.text === 'string' ? content.text : '');
+    setSavedAt(null);
+    setAiResponse('');
+    setAiQuery('');
+  }, [sectionNum, protocolSection?.id]);
 
-  const handleValidate = async () => {
-    if (!protocol?.id) return;
-    
-    setValidationLoading(true);
+  const scheduleAutoSave = useCallback(
+    (value: string) => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        autoSaveSection(sectionNum, { text: value });
+        setSavedAt(new Date());
+      }, 1500);
+    },
+    [sectionNum, autoSaveSection]
+  );
+
+  const handleChange = (value: string) => {
+    setText(value);
+    scheduleAutoSave(value);
+  };
+
+  const handleGenerate = async () => {
+    if (!protocol || !sectionDef) return;
+    setGenerating(true);
     try {
-      const report = await validateProtocol(protocol.id);
-      setValidationReport(report);
-    } catch (error) {
-      console.error('Validation failed:', error);
-    } finally {
-      setValidationLoading(false);
-    }
-  };
-
-  const handleValidationComplete = (report: any) => {
-    setValidationReport(report);
-    setSectionStatus(report.sectionStatus || {});
-  };
-
-  const handleNavigateToSection = (sectionNumber: string) => {
-    navigate(`section/${sectionNumber}`);
-  };
-
-  const handleDeleteProtocol = async () => {
-    if (!protocol?.id) return;
-
-    try {
-      const response = await fetch(`http://localhost:3001/api/protocols/${protocol.id}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete protocol');
-      }
-
-      notification.success('Protocol deleted successfully');
-      navigate('/protocol-builder');
-    } catch (error) {
-      console.error('Failed to delete protocol:', error);
-      notification.error('Failed to delete protocol');
-    } finally {
-      setDeleteDialogOpen(false);
-    }
-  };
-
-  const handleRenameProtocol = async () => {
-    if (!protocol?.id || !newProtocolName.trim()) return;
-
-    try {
-      const response = await fetch(`http://localhost:3001/api/protocols/${protocol.id}`, {
-        method: 'PATCH',
+      const res = await fetch('http://localhost:3001/api/ai/generate-content', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          shortTitle: newProtocolName.trim(),
-        })
+          sectionName: sectionDef.title,
+          parameters: {
+            title: protocol.fullTitle,
+            indication: protocol.indication,
+            phase: protocol.trialPhase,
+            studyType: protocol.studyType,
+          },
+          templateType: 'M11',
+        }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.error || 'Failed to rename protocol');
-      }
-
-      // Update protocol context
-      if (updateProtocol) {
-        updateProtocol({ shortTitle: newProtocolName.trim() });
-      }
-
-      notification.success('Protocol renamed successfully');
-      setRenameDialogOpen(false);
-      setNewProtocolName('');
-    } catch (error: any) {
-      console.error('Failed to rename protocol:', error);
-      notification.error(`Failed to rename protocol: ${error.message}`);
-      // Don't close dialog on error so user can try again
+      const json = await res.json();
+      const raw = json.data?.content || json.data?.text || json.data || '';
+      const generated = typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2);
+      handleChange(generated);
+    } catch {
+      // Backend offline — user can type manually
+    } finally {
+      setGenerating(false);
     }
   };
 
-  const handleOpenRenameDialog = () => {
-    setNewProtocolName(protocol?.shortTitle || protocol?.fullTitle || '');
-    setRenameDialogOpen(true);
+  const handleAiQuery = async () => {
+    if (!aiQuery.trim() || !sectionDef) return;
+    setAiLoading(true);
+    setAiResponse('');
+    try {
+      const res = await fetch('http://localhost:3001/api/ai/section-assistance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sectionName: sectionDef.title,
+          currentContent: text,
+          userQuery: aiQuery,
+          context: { indication: protocol?.indication, phase: protocol?.trialPhase },
+        }),
+      });
+      const json = await res.json();
+      const raw = json.data?.suggestion || json.data?.response || json.data?.content || json.data || '';
+      setAiResponse(typeof raw === 'string' ? raw : JSON.stringify(raw));
+    } catch {
+      setAiResponse('Backend not available. Start the server to use AI assistance.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const applyAiResponse = () => {
+    handleChange(text ? `${text}\n\n${aiResponse}` : aiResponse);
+    setAiResponse('');
+    setAiQuery('');
+  };
+
+  const prevNum = String(Number(sectionNum) - 1);
+  const nextNum = String(Number(sectionNum) + 1);
+  const hasPrev = SECTIONS.some(s => s.number === prevNum);
+  const hasNext = SECTIONS.some(s => s.number === nextNum);
+
+  if (!sectionDef) return null;
+
+  return (
+    <Box sx={{ maxWidth: 800, mx: 'auto', px: { xs: 2, md: 5 }, py: 5 }}>
+      {/* Section header */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.75, mb: 1.5 }}>
+          <Typography
+            sx={{ fontSize: '0.7rem', color: '#90A4AE', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', mr: 0.5 }}
+          >
+            Section {sectionDef.number} of 14
+          </Typography>
+          {sectionDef.tags.map(tag => (
+            <Chip
+              key={tag}
+              label={tag}
+              size="small"
+              sx={{ fontSize: '0.63rem', height: 18, backgroundColor: '#EFF6FF', color: '#0047AB', fontWeight: 600, borderRadius: 1 }}
+            />
+          ))}
+        </Box>
+        <Typography sx={{ fontSize: '1.625rem', fontWeight: 800, color: '#0A1628', lineHeight: 1.25, mb: 1 }}>
+          {sectionDef.title}
+        </Typography>
+        <Typography sx={{ fontSize: '0.875rem', color: '#546E7A', lineHeight: 1.7, maxWidth: 620 }}>
+          {sectionDef.description}
+        </Typography>
+      </Box>
+
+      {/* Empty state — generate CTA */}
+      {!text && !generating && (
+        <Box
+          sx={{
+            border: '2px dashed #D0D9E8',
+            borderRadius: 3,
+            p: 5,
+            textAlign: 'center',
+            mb: 4,
+            backgroundColor: alpha('#7C3AED', 0.015),
+          }}
+        >
+          <Box
+            sx={{ width: 52, height: 52, borderRadius: '14px', backgroundColor: alpha('#7C3AED', 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}
+          >
+            <AIIcon sx={{ fontSize: 26, color: '#7C3AED' }} />
+          </Box>
+          <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: '#0A1628', mb: 0.75 }}>
+            Start with an AI-drafted first cut
+          </Typography>
+          <Typography sx={{ fontSize: '0.85rem', color: '#546E7A', mb: 3, maxWidth: 380, mx: 'auto', lineHeight: 1.7 }}>
+            NexTrial drafts this section from your trial title, indication, and phase. You read and edit from there.
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button
+              variant="contained"
+              startIcon={<AIIcon />}
+              onClick={handleGenerate}
+              sx={{
+                background: 'linear-gradient(135deg, #7C3AED 0%, #0047AB 100%)',
+                fontWeight: 700,
+                px: 3,
+                py: 1.25,
+                borderRadius: 2,
+                boxShadow: '0 4px 16px rgba(124,58,237,0.25)',
+                '&:hover': { boxShadow: '0 8px 24px rgba(124,58,237,0.35)' },
+              }}
+            >
+              Generate with AI
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => handleChange(' ')}
+              sx={{ fontWeight: 600, px: 3, py: 1.25, borderRadius: 2, borderColor: '#D0D9E8', color: '#546E7A' }}
+            >
+              Write manually
+            </Button>
+          </Box>
+        </Box>
+      )}
+
+      {/* Generating spinner */}
+      {generating && (
+        <Box
+          sx={{ border: '1px solid #E8EDF5', borderRadius: 3, p: 5, textAlign: 'center', mb: 4, backgroundColor: alpha('#7C3AED', 0.02) }}
+        >
+          <CircularProgress size={32} sx={{ color: '#7C3AED', mb: 2 }} />
+          <Typography sx={{ color: '#546E7A', fontSize: '0.875rem' }}>
+            Drafting {sectionDef.title}…
+          </Typography>
+        </Box>
+      )}
+
+      {/* Content editor */}
+      {text && !generating && (
+        <Box sx={{ mb: 4 }}>
+          <TextField
+            multiline
+            fullWidth
+            value={text}
+            onChange={(e) => handleChange(e.target.value)}
+            minRows={14}
+            maxRows={40}
+            placeholder={`Write your ${sectionDef.title} here…`}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                fontSize: '0.9375rem',
+                lineHeight: 1.75,
+                fontFamily: '"Inter", system-ui, sans-serif',
+                color: '#0A1628',
+                '& fieldset': { borderColor: '#E8EDF5' },
+                '&:hover fieldset': { borderColor: '#C5D0E0' },
+                '&.Mui-focused fieldset': { borderColor: '#0047AB', borderWidth: '1.5px' },
+              },
+            }}
+          />
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 1.25 }}>
+            <Typography sx={{ fontSize: '0.72rem', color: '#B0BEC5' }}>
+              {savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : 'Saving…'}
+            </Typography>
+            <Button
+              size="small"
+              startIcon={<AIIcon sx={{ fontSize: '14px !important' }} />}
+              onClick={handleGenerate}
+              sx={{ fontSize: '0.72rem', color: '#7C3AED', py: 0.25, '&:hover': { backgroundColor: alpha('#7C3AED', 0.06) } }}
+            >
+              Regenerate
+            </Button>
+          </Box>
+        </Box>
+      )}
+
+      {/* AI assist bar */}
+      <Box
+        sx={{
+          border: '1px solid',
+          borderColor: alpha('#7C3AED', 0.2),
+          borderRadius: 3,
+          p: 2,
+          backgroundColor: alpha('#7C3AED', 0.025),
+          mb: 5,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <AIIcon sx={{ fontSize: 15, color: '#7C3AED' }} />
+          <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#7C3AED', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            AI Assist
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <TextField
+            fullWidth
+            size="small"
+            multiline
+            maxRows={3}
+            placeholder={`e.g. "Add ICMR-compliant language" · "Tighten eligibility criteria" · "Expand the statistical rationale"`}
+            value={aiQuery}
+            onChange={(e) => setAiQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAiQuery(); } }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                fontSize: '0.85rem',
+                borderRadius: 2,
+                backgroundColor: '#ffffff',
+                '& fieldset': { borderColor: '#E8EDF5' },
+                '&:hover fieldset': { borderColor: '#D0D9E8' },
+                '&.Mui-focused fieldset': { borderColor: '#7C3AED' },
+              },
+            }}
+          />
+          <IconButton
+            onClick={handleAiQuery}
+            disabled={!aiQuery.trim() || aiLoading}
+            size="small"
+            sx={{
+              alignSelf: 'flex-end',
+              color: '#7C3AED',
+              backgroundColor: alpha('#7C3AED', 0.08),
+              '&:hover': { backgroundColor: alpha('#7C3AED', 0.14) },
+              '&.Mui-disabled': { opacity: 0.4 },
+            }}
+          >
+            {aiLoading ? <CircularProgress size={16} color="inherit" /> : <SendIcon sx={{ fontSize: 16 }} />}
+          </IconButton>
+        </Box>
+
+        {/* AI response */}
+        {aiResponse && (
+          <Box sx={{ mt: 2, p: 2, backgroundColor: '#ffffff', borderRadius: 2, border: '1px solid #E8EDF5' }}>
+            <Typography sx={{ fontSize: '0.875rem', color: '#0A1628', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
+              {aiResponse}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mt: 1.5 }}>
+              <Button
+                size="small"
+                variant="contained"
+                onClick={applyAiResponse}
+                sx={{ fontSize: '0.75rem', backgroundColor: '#0047AB', fontWeight: 600, py: 0.5, px: 1.5, boxShadow: 'none', borderRadius: 1.5 }}
+              >
+                Apply to document
+              </Button>
+              <Button
+                size="small"
+                onClick={() => { setAiResponse(''); setAiQuery(''); }}
+                sx={{ fontSize: '0.75rem', color: '#90A4AE' }}
+              >
+                Dismiss
+              </Button>
+            </Box>
+          </Box>
+        )}
+      </Box>
+
+      {/* Prev / Next navigation */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #E8EDF5', pt: 3 }}>
+        <Button
+          startIcon={<PrevIcon />}
+          disabled={!hasPrev}
+          onClick={() => navigate(`/protocol-builder/${id}/section/${prevNum}`)}
+          sx={{ color: '#546E7A', fontWeight: 500, '&:hover': { backgroundColor: alpha('#0047AB', 0.05) } }}
+        >
+          {hasPrev ? SECTIONS.find(s => s.number === prevNum)?.title : ''}
+        </Button>
+        <Button
+          endIcon={<NextIcon />}
+          disabled={!hasNext}
+          onClick={() => navigate(`/protocol-builder/${id}/section/${nextNum}`)}
+          sx={{ color: '#546E7A', fontWeight: 500, '&:hover': { backgroundColor: alpha('#0047AB', 0.05) } }}
+        >
+          {hasNext ? SECTIONS.find(s => s.number === nextNum)?.title : ''}
+        </Button>
+      </Box>
+    </Box>
+  );
+};
+
+// Wrapper to read sectionNumber from nested route params
+const SectionWorkspaceRoute: React.FC = () => {
+  const { sectionNumber } = useParams<{ sectionNumber: string }>();
+  return <SectionWorkspace sectionNum={sectionNumber || '1'} />;
+};
+
+// ── Main builder layout ───────────────────────────────────────────────────────
+
+const ProtocolBuilderContent: React.FC = () => {
+  const { protocol, loading, error, updateProtocol } = useProtocol();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { id } = useParams<{ id: string }>();
+
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+
+  // Parse active section from URL
+  const activeSectionNum = location.pathname.match(/section\/(\d+)/)?.[1] || '1';
+
+  const isSectionFilled = (num: string) => {
+    const s = protocol?.sections?.find(sec => sec.sectionNumber === num);
+    return typeof s?.content?.text === 'string' && s.content.text.trim().length > 0;
+  };
+
+  const completion = Math.round(protocol?.completenessPercentage ?? 0);
+
+  const handleRename = async () => {
+    if (!protocol || !newName.trim()) return;
+    await updateProtocol({ shortTitle: newName.trim() });
+    setRenameOpen(false);
+  };
+
+  const handleDelete = async () => {
+    if (!protocol) return;
+    try {
+      await fetch(`http://localhost:3001/api/protocols/${protocol.id}`, { method: 'DELETE' });
+    } catch {}
+    navigate('/dashboard');
+  };
+
+  const phaseColor = (phase?: string) => {
+    if (!phase) return '#546E7A';
+    if (phase.includes('1')) return '#7C3AED';
+    if (phase.includes('2')) return '#0047AB';
+    if (phase.includes('3')) return '#059669';
+    if (phase.includes('4')) return '#D97706';
+    return '#546E7A';
   };
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: 2 }}>
-        <CircularProgress size={60} thickness={4} />
-        <Typography variant="h6" color="text.secondary">Loading protocol...</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#F7F9FC' }}>
+        <CircularProgress size={40} sx={{ color: '#0047AB' }} />
       </Box>
     );
   }
 
-  if (error) {
-    return (
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', p: 4 }}>
-        <Card sx={{ p: 4, maxWidth: 500, textAlign: 'center', borderColor: 'error.main' }}>
-          <ErrorIcon sx={{ fontSize: 60, color: 'error.main', mb: 2 }} />
-          <Typography variant="h5" fontWeight={600} gutterBottom>Error Loading Protocol</Typography>
-          <Typography color="text.secondary">{error}</Typography>
-        </Card>
-      </Box>
-    );
-  }
-
-  if (!protocol) {
+  if (error || !protocol) {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-        <Typography variant="h6" color="text.secondary">Protocol not found</Typography>
+        <Typography sx={{ color: '#546E7A' }}>{error || 'Protocol not found'}</Typography>
       </Box>
     );
   }
 
-  const completeness = protocol.completenessPercentage || 0;
-  const getCompletenessColor = () => {
-    if (completeness >= 90) return colors.semantic.success;
-    if (completeness >= 70) return colors.semantic.info;
-    if (completeness >= 40) return colors.semantic.warning;
-    return colors.text.disabled;
-  };
-
   return (
-    <BuilderContainer>
-      {/* Left Sidebar - Section Navigation */}
-      <Fade in timeout={400}>
-        <SidebarContainer>
-          <SectionNav 
-            sections={protocol.sections || []} 
-            protocolId={protocol.id}
-            sectionStatus={sectionStatus}
-          />
-        </SidebarContainer>
-      </Fade>
+    <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden', backgroundColor: '#F7F9FC' }}>
 
-      {/* Main Content Area */}
-      <MainContent>
-        <Fade in timeout={600}>
-          <Box>
-            {/* Header */}
-            <HeaderCard>
-              {/* Breadcrumb Navigation */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <Tooltip title="Go to Home">
-                  <IconButton
-                    onClick={() => {
-                      console.log('Navigating to home');
-                      window.location.href = '/';
-                    }}
-                    size="small"
-                    sx={{
-                      color: colors.text.secondary,
-                      cursor: 'pointer',
-                      '&:hover': {
-                        color: colors.primary.main,
-                        backgroundColor: `${colors.primary.main}10`
-                      }
-                    }}
-                  >
-                    <HomeIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Typography variant="body2" color="text.secondary">/</Typography>
-                <Tooltip title="Back to My Protocols">
-                  <Button
-                    onClick={() => {
-                      console.log('Navigating to protocol builder');
-                      window.location.href = '/protocol-builder';
-                    }}
-                    startIcon={<BackIcon fontSize="small" />}
-                    size="small"
-                    sx={{
-                      color: colors.text.secondary,
-                      textTransform: 'none',
-                      minWidth: 'auto',
-                      cursor: 'pointer',
-                      '&:hover': {
-                        color: colors.primary.main,
-                        backgroundColor: `${colors.primary.main}10`
-                      }
-                    }}
-                  >
-                    My Protocols
-                  </Button>
-                </Tooltip>
-                <Typography variant="body2" color="text.secondary">/</Typography>
-                <Typography variant="body2" color="primary" fontWeight={600}>
-                  {protocol.sponsorProtocolIdentifier}
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Box sx={{ flex: 1 }}>
-                  <Typography 
-                    variant="h4" 
-                    fontWeight={700}
-                    sx={{ 
-                      mb: 1,
-                      background: `linear-gradient(45deg, ${colors.primary.main}, ${colors.secondary.main})`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}
-                  >
-                    {protocol.shortTitle || protocol.fullTitle}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                      {protocol.sponsorProtocolIdentifier}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">•</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Version {protocol.protocolVersion}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">•</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {new Date(protocol.protocolDate).toLocaleDateString()}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                  {/* Auto-save Status */}
-                  {(saving || lastSaved) && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, py: 1, borderRadius: 2, backgroundColor: saving ? `${colors.primary.main}10` : `${colors.semantic.success}10` }}>
-                      {saving ? (
-                        <>
-                          <CircularProgress size={16} thickness={4} />
-                          <Typography variant="caption" color="primary" fontWeight={600}>
-                            Saving...
-                          </Typography>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle sx={{ fontSize: 16, color: colors.semantic.success }} />
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            Saved {lastSaved?.toLocaleTimeString()}
-                          </Typography>
-                        </>
-                      )}
-                    </Box>
-                  )}
-
-                  {/* Export Button */}
-                  <Button
-                    variant="outlined"
-                    startIcon={<DownloadIcon />}
-                    onClick={() => setExportDialogOpen(true)}
-                    sx={{
-                      borderColor: colors.primary.main,
-                      color: colors.primary.main,
-                      '&:hover': {
-                        borderColor: colors.primary.dark,
-                        backgroundColor: `${colors.primary.main}10`
-                      }
-                    }}
-                  >
-                    Export
-                  </Button>
-
-                  {/* Clone Button */}
-                  <Button
-                    variant="outlined"
-                    startIcon={<ContentCopyIcon />}
-                    onClick={() => setCloneDialogOpen(true)}
-                    sx={{
-                      borderColor: colors.secondary.main,
-                      color: colors.secondary.main,
-                      '&:hover': {
-                        borderColor: colors.secondary.dark,
-                        backgroundColor: `${colors.secondary.main}10`
-                      }
-                    }}
-                  >
-                    Clone
-                  </Button>
-
-                  {/* Rename Button */}
-                  <Button
-                    variant="outlined"
-                    startIcon={<RenameIcon />}
-                    onClick={handleOpenRenameDialog}
-                    sx={{
-                      borderColor: colors.primary.main,
-                      color: colors.primary.main,
-                      '&:hover': {
-                        borderColor: colors.primary.dark,
-                        backgroundColor: `${colors.primary.main}10`
-                      }
-                    }}
-                  >
-                    Rename
-                  </Button>
-
-                  {/* Delete Button */}
-                  <Button
-                    variant="outlined"
-                    startIcon={<DeleteIcon />}
-                    onClick={() => setDeleteDialogOpen(true)}
-                    sx={{
-                      borderColor: colors.semantic.error,
-                      color: colors.semantic.error,
-                      '&:hover': {
-                        borderColor: colors.semantic.error,
-                        backgroundColor: `${colors.semantic.error}10`
-                      }
-                    }}
-                  >
-                    Delete
-                  </Button>
-
-                  {/* Circular Progress */}
-                  <ProgressCircle>
-                    <CircularProgress
-                      variant="determinate"
-                      value={completeness}
-                      size={80}
-                      thickness={4}
-                      sx={{
-                        color: getCompletenessColor(),
-                        '& .MuiCircularProgress-circle': {
-                          strokeLinecap: 'round',
-                        },
-                      }}
-                    />
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Typography variant="h6" fontWeight={700} sx={{ color: getCompletenessColor() }}>
-                        {completeness}%
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
-                        Complete
-                      </Typography>
-                    </Box>
-                  </ProgressCircle>
-
-                  {/* Validation Toggle */}
-                  <Tooltip title={showValidation ? 'Hide Validation' : 'Show Validation'}>
-                    <ValidationToggle
-                      onClick={() => setShowValidation(!showValidation)}
-                      className={showValidation ? 'active' : ''}
-                    >
-                      {showValidation ? <VisibilityOff /> : <Visibility />}
-                    </ValidationToggle>
-                  </Tooltip>
-
-                  {/* Help Buttons */}
-                  <Tooltip title="Keyboard Shortcuts (?)">
-                    <IconButton
-                      onClick={() => setShortcutsOpen(true)}
-                      sx={{
-                        color: colors.text.secondary,
-                        '&:hover': {
-                          color: colors.primary.main,
-                          backgroundColor: `${colors.primary.main}10`
-                        }
-                      }}
-                    >
-                      <KeyboardIcon />
-                    </IconButton>
-                  </Tooltip>
-
-                  <Tooltip title="User Guide">
-                    <IconButton
-                      onClick={() => setGuideOpen(true)}
-                      sx={{
-                        color: colors.text.secondary,
-                        '&:hover': {
-                          color: colors.primary.main,
-                          backgroundColor: `${colors.primary.main}10`
-                        }
-                      }}
-                    >
-                      <HelpIcon />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </Box>
-            </HeaderCard>
-
-            {/* Content Area */}
-            <ContentCard>
-              {/* Validation Status Bar - Always Visible */}
-              <ValidationStatusBar
-                protocolId={protocol.id}
-                onValidationComplete={handleValidationComplete}
-              />
-              
-              <Routes>
-                <Route index element={<ProtocolMetadataFormEnhanced />} />
-                <Route path="section/:sectionNumber" element={<SectionContent />} />
-                <Route path="*" element={<Navigate to="" replace />} />
-              </Routes>
-            </ContentCard>
-          </Box>
-        </Fade>
-      </MainContent>
-
-      {/* Right Sidebar - Validation Panel */}
-      {showValidation && (
-        <Fade in timeout={400}>
-          <ValidationSidebar>
-            <ValidationPanel
-              report={validationReport}
-              loading={validationLoading}
-              onValidate={handleValidate}
-              onNavigateToSection={handleNavigateToSection}
-            />
-          </ValidationSidebar>
-        </Fade>
-      )}
-
-      {/* Export Manager */}
-      <ExportManager
-        protocolId={protocol.id}
-        protocolTitle={protocol?.fullTitle || 'Protocol'}
-        open={exportDialogOpen}
-        onClose={() => setExportDialogOpen(false)}
-      />
-
-      {/* Clone Protocol Dialog */}
-      <CloneProtocolDialog
-        protocolId={protocol.id}
-        protocolTitle={protocol?.fullTitle || 'Protocol'}
-        open={cloneDialogOpen}
-        onClose={() => setCloneDialogOpen(false)}
-        onSuccess={(newId) => {
-          window.location.href = `/protocols/${newId}`;
+      {/* ── Left nav ─────────────────────────────────────────────────────────── */}
+      <Box
+        sx={{
+          width: 252,
+          flexShrink: 0,
+          backgroundColor: '#ffffff',
+          borderRight: '1px solid #E8EDF5',
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto',
         }}
-      />
+      >
+        {/* Logo + trial meta */}
+        <Box sx={{ p: 2.5, borderBottom: '1px solid #E8EDF5' }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', gap: 0.75, cursor: 'pointer', mb: 2 }}
+            onClick={() => navigate('/dashboard')}
+          >
+            <Box sx={{ width: 26, height: 26, borderRadius: '7px', background: 'linear-gradient(135deg, #0047AB 0%, #00897B 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '0.8rem', lineHeight: 1 }}>N</Typography>
+            </Box>
+            <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: '#0A1628' }}>NexTrial</Typography>
+          </Box>
+          <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: '#3D4E63', lineHeight: 1.4, mb: 2 }}>
+            {protocol.shortTitle || protocol.fullTitle}
+          </Typography>
+          {/* Completion bar */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: '#E8EDF5', overflow: 'hidden' }}>
+              <Box
+                sx={{
+                  height: '100%',
+                  width: `${completion}%`,
+                  background: 'linear-gradient(90deg, #0047AB 0%, #00897B 100%)',
+                  borderRadius: 2,
+                  transition: 'width 0.4s ease',
+                }}
+              />
+            </Box>
+            <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#0047AB', flexShrink: 0 }}>
+              {completion}%
+            </Typography>
+          </Box>
+        </Box>
 
-      {/* Keyboard Shortcuts */}
-      <KeyboardShortcuts
-        open={shortcutsOpen}
-        onClose={() => setShortcutsOpen(false)}
-      />
+        {/* Section list */}
+        <Box sx={{ flex: 1, py: 1 }}>
+          {GROUPS.map(group => (
+            <Box key={group}>
+              <Typography
+                sx={{
+                  px: 2.5,
+                  pt: 2,
+                  pb: 0.75,
+                  fontSize: '0.62rem',
+                  fontWeight: 700,
+                  color: '#B0BEC5',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                }}
+              >
+                {group}
+              </Typography>
+              {SECTIONS.filter(s => s.group === group).map(section => (
+                <NavItem
+                  key={section.number}
+                  section={section}
+                  active={activeSectionNum === section.number}
+                  filled={isSectionFilled(section.number)}
+                  onClick={() => navigate(`/protocol-builder/${id}/section/${section.number}`)}
+                />
+              ))}
+            </Box>
+          ))}
+        </Box>
+      </Box>
 
-      {/* User Guide */}
-      <UserGuide
-        open={guideOpen}
-        onClose={() => setGuideOpen(false)}
-      />
-
-      {/* AI Assistant Panel */}
-      <AIAssistantPanel
-        open={aiAssistantOpen}
-        onClose={() => setAiAssistantOpen(false)}
-        protocolId={protocol.id}
-        currentSection={sectionNumber}
-      />
-
-      {/* Smart Suggestions Sidebar - Temporarily Disabled */}
-      {/* TODO: Fix AISmartSuggestions component props mismatch */}
-      {false && showSuggestions && protocol.sections && (
+      {/* ── Right: topbar + content ───────────────────────────────────────────── */}
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Top bar */}
         <Box
           sx={{
-            position: 'fixed',
-            right: showValidation ? 420 : 20,
-            top: 100,
-            width: 320,
-            maxHeight: 'calc(100vh - 120px)',
-            overflowY: 'auto',
-            zIndex: 999,
-            transition: 'right 0.3s ease'
+            height: 56,
+            flexShrink: 0,
+            backgroundColor: '#ffffff',
+            borderBottom: '1px solid #E8EDF5',
+            display: 'flex',
+            alignItems: 'center',
+            px: 3,
+            gap: 1.5,
           }}
         >
-          <AISmartSuggestions
-            protocolId={protocol.id}
-            currentSection={sectionNumber || 'metadata'}
-            completedSections={protocol.sections.filter((s: any) => s.isComplete).map((s: any) => s.sectionNumber)}
-            protocolContext={protocol}
-          />
+          <IconButton size="small" onClick={() => navigate('/dashboard')} sx={{ color: '#546E7A' }}>
+            <BackIcon sx={{ fontSize: 20 }} />
+          </IconButton>
+          <Typography
+            sx={{
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              color: '#0A1628',
+              flex: 1,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {protocol.shortTitle || protocol.fullTitle}
+          </Typography>
+          {protocol.trialPhase && (
+            <Chip
+              label={protocol.trialPhase}
+              size="small"
+              sx={{
+                fontSize: '0.68rem',
+                fontWeight: 600,
+                height: 22,
+                backgroundColor: alpha(phaseColor(protocol.trialPhase), 0.1),
+                color: phaseColor(protocol.trialPhase),
+              }}
+            />
+          )}
+          {protocol.indication && (
+            <Typography sx={{ fontSize: '0.78rem', color: '#78909C', display: { xs: 'none', lg: 'block' } }}>
+              {protocol.indication}
+            </Typography>
+          )}
+          <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)} sx={{ color: '#546E7A' }}>
+            <MoreIcon sx={{ fontSize: 20 }} />
+          </IconButton>
         </Box>
-      )}
 
-      {/* Floating AI Assistant Button */}
-      <Tooltip title="AI Assistant (Ctrl+Shift+A)" placement="left">
-        <Fab
-          color="primary"
-          aria-label="AI Assistant"
-          onClick={() => setAiAssistantOpen(true)}
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
-            boxShadow: `0 8px 24px ${alpha(colors.primary.main, 0.4)}`,
-            '&:hover': {
-              background: `linear-gradient(135deg, ${colors.primary.dark} 0%, ${colors.secondary.dark} 100%)`,
-              boxShadow: `0 12px 32px ${alpha(colors.primary.main, 0.5)}`,
-              transform: 'scale(1.05)'
-            },
-            transition: 'all 0.3s ease',
-            zIndex: 1000
+        {/* Scrollable content */}
+        <Box sx={{ flex: 1, overflowY: 'auto', backgroundColor: '#F7F9FC' }}>
+          <Routes>
+            <Route index element={<Navigate to="section/1" replace />} />
+            <Route path="section/:sectionNumber" element={<SectionWorkspaceRoute />} />
+            <Route path="*" element={<Navigate to="section/1" replace />} />
+          </Routes>
+        </Box>
+      </Box>
+
+      {/* ── 3-dot menu ─────────────────────────────────────────────────────────── */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={() => setMenuAnchor(null)}
+        PaperProps={{ sx: { borderRadius: 2, boxShadow: '0 8px 32px rgba(0,0,0,0.12)', mt: 0.5 } }}
+      >
+        <MenuItem
+          onClick={() => {
+            setMenuAnchor(null);
+            setNewName(protocol.shortTitle || protocol.fullTitle);
+            setRenameOpen(true);
           }}
         >
-          <AIIcon sx={{ fontSize: 32 }} />
-        </Fab>
-      </Tooltip>
+          <ListItemIcon><RenameIcon fontSize="small" /></ListItemIcon>
+          Rename
+        </MenuItem>
+        <MenuItem disabled sx={{ opacity: 0.5 }}>
+          <ListItemIcon><ExportIcon fontSize="small" /></ListItemIcon>
+          Export — Sprint 6
+        </MenuItem>
+        <MenuItem
+          onClick={() => { setMenuAnchor(null); setDeleteOpen(true); }}
+          sx={{ color: 'error.main' }}
+        >
+          <ListItemIcon><DeleteIcon fontSize="small" color="error" /></ListItemIcon>
+          Delete
+        </MenuItem>
+      </Menu>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ 
-          fontWeight: 700,
-          color: colors.semantic.error,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1
-        }}>
-          <DeleteIcon />
-          Delete Protocol?
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete this protocol?
-          </DialogContentText>
-          {protocol && (
-            <Box sx={{ mt: 2, p: 2, bgcolor: `${colors.semantic.error}10`, borderRadius: 2 }}>
-              <Typography variant="body2" fontWeight={600} gutterBottom>
-                {protocol.sponsorProtocolIdentifier}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {protocol.fullTitle}
-              </Typography>
-            </Box>
-          )}
-          <DialogContentText sx={{ mt: 2, color: colors.semantic.error, fontWeight: 600 }}>
-            This action cannot be undone. All protocol data, sections, objectives, and criteria will be permanently deleted.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button 
-            onClick={() => setDeleteDialogOpen(false)}
-            variant="outlined"
-            sx={{
-              borderColor: colors.text.secondary,
-              color: colors.text.secondary
-            }}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleDeleteProtocol}
-            variant="contained"
-            color="error"
-            startIcon={<DeleteIcon />}
-            sx={{
-              background: colors.semantic.error,
-              '&:hover': {
-                background: colors.semantic.error,
-                filter: 'brightness(0.9)'
-              }
-            }}
-          >
-            Delete Protocol
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Rename Protocol Dialog */}
-      <Dialog
-        open={renameDialogOpen}
-        onClose={() => setRenameDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ 
-          fontWeight: 700,
-          color: colors.primary.main,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1
-        }}>
-          <RenameIcon />
-          Rename Protocol
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ mb: 3 }}>
-            Enter a new name for this protocol. This will update the short title displayed throughout the application.
-          </DialogContentText>
-          {protocol && (
-            <Box sx={{ mb: 3, p: 2, bgcolor: `${colors.primary.main}10`, borderRadius: 2 }}>
-              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                Current Name
-              </Typography>
-              <Typography variant="body2" fontWeight={600}>
-                {protocol.shortTitle || protocol.fullTitle}
-              </Typography>
-            </Box>
-          )}
+      {/* ── Rename dialog ───────────────────────────────────────────────────────── */}
+      <Dialog open={renameOpen} onClose={() => setRenameOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 700, pb: 0 }}>Rename Trial</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
           <TextField
             autoFocus
             fullWidth
-            label="New Protocol Name"
-            value={newProtocolName}
-            onChange={(e) => setNewProtocolName(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && newProtocolName.trim()) {
-                handleRenameProtocol();
-              }
-            }}
-            placeholder="Enter new protocol name"
-            helperText="Press Enter to save"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '&.Mui-focused fieldset': {
-                  borderColor: colors.primary.main,
-                },
-              },
-            }}
+            label="Trial name"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleRename(); }}
+            sx={{ mt: 0.5 }}
           />
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button 
-            onClick={() => setRenameDialogOpen(false)}
-            variant="outlined"
-            sx={{
-              borderColor: colors.text.secondary,
-              color: colors.text.secondary
-            }}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleRenameProtocol}
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={() => setRenameOpen(false)} sx={{ color: '#546E7A' }}>Cancel</Button>
+          <Button
             variant="contained"
-            disabled={!newProtocolName.trim()}
-            startIcon={<RenameIcon />}
-            sx={{
-              background: `linear-gradient(135deg, ${colors.primary.main} 0%, ${colors.secondary.main} 100%)`,
-              '&:hover': {
-                background: `linear-gradient(135deg, ${colors.primary.dark} 0%, ${colors.secondary.dark} 100%)`,
-              },
-              '&:disabled': {
-                background: colors.text.disabled,
-                color: '#fff'
-              }
-            }}
+            onClick={handleRename}
+            disabled={!newName.trim()}
+            sx={{ background: 'linear-gradient(135deg, #0047AB 0%, #00897B 100%)', fontWeight: 600, boxShadow: 'none' }}
           >
-            Rename
+            Save
           </Button>
         </DialogActions>
       </Dialog>
-    </BuilderContainer>
+
+      {/* ── Delete dialog ───────────────────────────────────────────────────────── */}
+      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 700, color: '#DC2626' }}>Delete Trial?</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ color: '#546E7A', lineHeight: 1.7 }}>
+            This will permanently delete <strong>{protocol.shortTitle || protocol.fullTitle}</strong> and all of its sections. This cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={() => setDeleteOpen(false)} sx={{ color: '#546E7A' }}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleDelete}>Delete</Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
+
+// ── Page entry ────────────────────────────────────────────────────────────────
 
 export const ProtocolBuilderPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -844,7 +732,7 @@ export const ProtocolBuilderPage: React.FC = () => {
   if (!id) {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-        <Typography variant="h6" color="text.secondary">No protocol ID provided</Typography>
+        <Typography sx={{ color: '#546E7A' }}>No protocol ID provided</Typography>
       </Box>
     );
   }

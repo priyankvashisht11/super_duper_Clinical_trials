@@ -4,7 +4,7 @@ import { alpha } from '@mui/material/styles';
 import { colors } from '../../styles/theme';
 
 // Status chips for trial recruitment status
-export const StatusChip = styled(Chip)<{ status?: string }>(({ theme, status }) => {
+export const StatusChip = styled(Chip)<{ status?: string }>(({ status }) => {
   const getStatusStyles = (status?: string) => {
     switch (status) {
       case 'recruiting':
@@ -52,7 +52,7 @@ export const StatusChip = styled(Chip)<{ status?: string }>(({ theme, status }) 
 });
 
 // Phase chips for trial phases
-export const PhaseChip = styled(Chip)<{ phase?: string }>(({ theme, phase }) => {
+export const PhaseChip = styled(Chip)<{ phase?: string }>(({ phase }) => {
   const getPhaseStyles = (phase?: string) => {
     switch (phase) {
       case 'I':
@@ -101,7 +101,7 @@ export const PhaseChip = styled(Chip)<{ phase?: string }>(({ theme, phase }) => 
 });
 
 // Priority badge for important trials
-export const PriorityBadge = styled(Badge)<{ priority?: 'high' | 'medium' | 'low' }>(({ theme, priority }) => {
+export const PriorityBadge = styled(Badge)<{ priority?: 'high' | 'medium' | 'low' }>(({ priority }) => {
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case 'high': return colors.semantic.error;
@@ -124,7 +124,7 @@ export const PriorityBadge = styled(Badge)<{ priority?: 'high' | 'medium' | 'low
 });
 
 // Bookmark indicator
-export const BookmarkIndicator = styled(Box)<{ bookmarked?: boolean }>(({ theme, bookmarked }) => ({
+export const BookmarkIndicator = styled(Box)<{ bookmarked?: boolean }>(({ bookmarked }) => ({
   position: 'absolute',
   top: 12,
   right: 12,
@@ -137,7 +137,7 @@ export const BookmarkIndicator = styled(Box)<{ bookmarked?: boolean }>(({ theme,
 }));
 
 // Selection indicator for trial cards
-export const SelectionIndicator = styled(Box)<{ selected?: boolean }>(({ theme, selected }) => ({
+export const SelectionIndicator = styled(Box)<{ selected?: boolean }>(({ selected }) => ({
   position: 'absolute',
   top: 0,
   left: 0,
@@ -175,7 +175,7 @@ export const LoadingIndicator = styled(Box)(({ theme }) => ({
 }));
 
 // Progress indicator for document generation
-export const ProgressIndicator = styled(Box)<{ progress?: number }>(({ theme, progress = 0 }) => ({
+export const ProgressIndicator = styled(Box)<{ progress?: number }>(({ progress = 0 }) => ({
   width: '100%',
   height: 4,
   backgroundColor: alpha(colors.primary.main, 0.1),
@@ -215,7 +215,7 @@ export const ConnectionStatus = styled(Box)<{ online?: boolean }>(({ theme, onli
 }));
 
 // New/updated indicator
-export const NewIndicator = styled(Box)(({ theme }) => ({
+export const NewIndicator = styled(Box)(() => ({
   position: 'absolute',
   top: 8,
   right: 8,

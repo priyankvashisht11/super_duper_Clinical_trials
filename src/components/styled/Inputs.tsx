@@ -123,7 +123,7 @@ export const MedicalAutocomplete = styled(Autocomplete)(({ theme }) => ({
 }));
 
 // Research question input
-export const ResearchQuestionInput = styled(TextField)(({ theme }) => ({
+export const ResearchQuestionInput = styled(TextField)(() => ({
   '& .MuiOutlinedInput-root': {
     borderRadius: 8,
     backgroundColor: colors.background.surface,
@@ -140,7 +140,7 @@ export const ResearchQuestionInput = styled(TextField)(({ theme }) => ({
 }));
 
 // Filter slider
-export const FilterSlider = styled(Slider)(({ theme }) => ({
+export const FilterSlider = styled(Slider)(() => ({
   color: colors.primary.main,
   height: 6,
   
@@ -246,7 +246,7 @@ export const RadioGroup = styled(FormControl)(({ theme }) => ({
 }));
 
 // Location input with map integration
-export const LocationInput = styled(FormInput)(({ theme }) => ({
+export const LocationInput = styled(FormInput)(() => ({
   '& .MuiInputAdornment-root': {
     color: colors.text.secondary,
   },
@@ -280,7 +280,7 @@ export const FileUploadLabel = styled('label')(({ theme }) => ({
 }));
 
 // Search suggestions dropdown
-export const SearchSuggestions = styled('div')(({ theme }) => ({
+export const SearchSuggestions = styled('div')(() => ({
   position: 'absolute',
   top: '100%',
   left: 0,

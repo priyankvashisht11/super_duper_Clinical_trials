@@ -4,7 +4,7 @@ import { alpha } from '@mui/material/styles';
 import { colors } from '../../styles/theme';
 
 // Base card components
-export const BaseCard = styled(Card)(({ theme }) => ({
+export const BaseCard = styled(Card)(() => ({
   borderRadius: 12,
   border: `1px solid ${colors.border.light}`,
   boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
@@ -81,7 +81,7 @@ export const TrialCardActions = styled(CardActions)(({ theme }) => ({
 }));
 
 // Feature cards for landing page
-export const FeatureCard = styled(BaseCard)(({ theme }) => ({
+export const FeatureCard = styled(BaseCard)(() => ({
   height: '100%',
   display: 'flex',
   flexDirection: 'column',

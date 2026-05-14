@@ -1,4 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 import { Box, Typography, Button, Alert, AlertTitle } from '@mui/material';
 
 interface Props {
@@ -67,7 +68,7 @@ class ErrorBoundary extends Component<Props, State> {
           
           <Button 
             variant="outlined" 
-            onClick={() => this.setState({ hasError: false, error: undefined, errorInfo: undefined })}
+            onClick={() => this.setState({ hasError: false } as State)}
           >
             Try Again
           </Button>

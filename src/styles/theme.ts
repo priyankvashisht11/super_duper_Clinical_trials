@@ -1,36 +1,44 @@
 import { createTheme } from '@mui/material/styles';
 import { alpha } from '@mui/material/styles';
 
-// Medical color palette based on design requirements
+// NexTrial brand color palette
 const medicalColors = {
   primary: {
-    main: '#1A73E8',
-    dark: '#1557B0',
-    light: '#E3F2FD',
+    main: '#0047AB',
+    dark: '#003080',
+    light: '#E8F0FE',
     contrastText: '#FFFFFF',
   },
   secondary: {
-    main: '#4CAF50',
-    dark: '#388E3C',
-    light: '#E8F5E8',
+    main: '#00897B',
+    dark: '#00695C',
+    light: '#E0F2F1',
     contrastText: '#FFFFFF',
   },
   background: {
-    default: '#FFFFFF',
+    default: '#F7F9FC',
     paper: '#FFFFFF',
-    surface: '#F5F5F5',
-    elevated: '#FAFAFA',
+    surface: '#EEF2F7',
+    elevated: '#FAFBFF',
   },
   text: {
-    primary: '#333333',
-    secondary: '#666666',
-    disabled: '#999999',
-    hint: '#BDBDBD',
+    primary: '#0A1628',
+    secondary: '#546E7A',
+    disabled: '#90A4AE',
+    hint: '#B0BEC5',
   },
   border: {
-    light: '#F0F0F0',
-    main: '#E0E0E0',
-    dark: '#BDBDBD',
+    light: '#E8EDF5',
+    main: '#D0D9E8',
+    dark: '#A8B8CC',
+  },
+  stages: {
+    research: '#7C3AED',
+    protocol: '#0047AB',
+    regulatory: '#D97706',
+    execute: '#059669',
+    analyze: '#0284C7',
+    submit: '#6D28D9',
   },
   status: {
     recruiting: '#4CAF50',

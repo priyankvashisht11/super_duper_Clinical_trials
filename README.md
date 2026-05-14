@@ -4,8 +4,7 @@ AI-Powered Clinical Trials Research for Indian Physicians
 
 ## Overview
 
-The Clinical Trials Intelligence Platform is a modern, AI-powered web application that combines the clean, research-focused interface of SciSpace with clinical workflow efficiency. The platform serves physicians, researchers, and clinical coordinators with comprehensive CTRI database integration, multi-language support, and CDSCO compliance.
-
+ 
 ## Features
 
 - 🔍 **Comprehensive CTRI Search** - Access complete Indian clinical trials database with advanced filtering

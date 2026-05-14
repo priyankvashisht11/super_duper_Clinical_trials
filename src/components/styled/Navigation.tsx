@@ -62,7 +62,7 @@ export const NavMenu = styled('nav')(({ theme }) => ({
   },
 }));
 
-export const NavMenuItem = styled('a')(({ theme }) => ({
+export const NavMenuItem = styled('a')(() => ({
   padding: '8px 16px',
   borderRadius: 6,
   textDecoration: 'none',
@@ -90,7 +90,7 @@ export const UserMenu = styled('div')(({ theme }) => ({
 }));
 
 // Mobile drawer
-export const MobileDrawer = styled(Drawer)(({ theme }) => ({
+export const MobileDrawer = styled(Drawer)(() => ({
   '& .MuiDrawer-paper': {
     width: 280,
     backgroundColor: colors.background.default,
@@ -230,7 +230,7 @@ export const PaginationNav = styled('nav')(({ theme }) => ({
   padding: theme.spacing(3, 0),
 }));
 
-export const PaginationButton = styled('button')<{ active?: boolean; disabled?: boolean }>(({ theme, active = false, disabled = false }) => ({
+export const PaginationButton = styled('button')<{ active?: boolean; disabled?: boolean }>(({ active = false, disabled = false }) => ({
   minWidth: 40,
   height: 40,
   border: `1px solid ${colors.border.main}`,

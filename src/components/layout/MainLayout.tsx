@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, useTheme, useMediaQuery } from '@mui/material';
+import { useTheme, useMediaQuery } from '@mui/material';
 import { TopNavigation } from './TopNavigation';
 import { FilterSidebar } from './FilterSidebar';
 import { DocumentPanel } from './DocumentPanel';

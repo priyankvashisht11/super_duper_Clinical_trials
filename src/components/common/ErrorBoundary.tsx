@@ -1,4 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 import {
   Box, Card, CardContent, Typography, Button, Alert
 } from '@mui/material';
@@ -88,7 +89,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 We're sorry for the inconvenience. The application encountered an unexpected error.
               </Typography>
 
-              {process.env.NODE_ENV === 'development' && this.state.error && (
+              {process.env['NODE_ENV'] === 'development' && this.state.error && (
                 <Alert severity="error" sx={{ mb: 3, textAlign: 'left' }}>
                   <Typography variant="subtitle2" fontWeight={700} gutterBottom>
                     Error Details (Development Only):

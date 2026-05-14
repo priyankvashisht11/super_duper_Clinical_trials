@@ -337,10 +337,10 @@ export const DocumentPanel: React.FC<DocumentPanelProps> = ({
           },
         }}
       >
-        <DocumentPanelContent 
-          onClose={onToggle} 
-          selectedTrials={selectedTrials}
-          onTrialRemove={onTrialRemove}
+        <DocumentPanelContent
+          onClose={onToggle}
+          {...(selectedTrials !== undefined ? { selectedTrials } : {})}
+          {...(onTrialRemove !== undefined ? { onTrialRemove } : {})}
         />
       </Drawer>
     );
@@ -349,9 +349,9 @@ export const DocumentPanel: React.FC<DocumentPanelProps> = ({
   return (
     <StyledDocumentPanel isOpen={open} elevation={0}>
       {open && (
-        <DocumentPanelContent 
-          selectedTrials={selectedTrials}
-          onTrialRemove={onTrialRemove}
+        <DocumentPanelContent
+          {...(selectedTrials !== undefined ? { selectedTrials } : {})}
+          {...(onTrialRemove !== undefined ? { onTrialRemove } : {})}
         />
       )}
     </StyledDocumentPanel>

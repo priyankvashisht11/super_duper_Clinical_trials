@@ -138,10 +138,10 @@ export function AuthModal({ open, onClose, defaultTab = 'signin' }: AuthModalPro
         password: signUpData.password,
         firstName: signUpData.firstName,
         lastName: signUpData.lastName,
-        title: signUpData.title || undefined,
-        specialty: signUpData.specialty || undefined,
-        institution: signUpData.institution || undefined,
-        licenseNumber: signUpData.licenseNumber || undefined,
+        ...(signUpData.title ? { title: signUpData.title } : {}),
+        ...(signUpData.specialty ? { specialty: signUpData.specialty } : {}),
+        ...(signUpData.institution ? { institution: signUpData.institution } : {}),
+        ...(signUpData.licenseNumber ? { licenseNumber: signUpData.licenseNumber } : {}),
       });
       onClose();
     } catch (err: any) {

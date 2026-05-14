@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Box,
   Container,
@@ -16,7 +15,6 @@ import {
 import {
   ExpandMore as ExpandMoreIcon,
   Email as EmailIcon,
-  Phone as PhoneIcon,
   Description as DocumentIcon,
   VideoLibrary as VideoIcon,
 } from '@mui/icons-material';
@@ -79,7 +77,7 @@ export function HelpSupportPage() {
 
       {/* Contact Cards */}
       <Grid container spacing={3} mb={6}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent sx={{ textAlign: 'center', py: 4 }}>
               <EmailIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
@@ -96,7 +94,7 @@ export function HelpSupportPage() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent sx={{ textAlign: 'center', py: 4 }}>
               <DocumentIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
@@ -111,7 +109,7 @@ export function HelpSupportPage() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent sx={{ textAlign: 'center', py: 4 }}>
               <VideoIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />

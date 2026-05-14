@@ -41,7 +41,7 @@ export const CardTitle = styled(Typography)(({ theme }) => ({
 }));
 
 // Subtitle text
-export const Subtitle = styled(Typography)(({ theme }) => ({
+export const Subtitle = styled(Typography)(() => ({
   fontSize: '1rem',
   fontWeight: 400,
   color: colors.text.secondary,
@@ -62,7 +62,7 @@ export const BodyText = styled(Typography)(({ theme }) => ({
 }));
 
 // Caption text for metadata
-export const CaptionText = styled(Typography)(({ theme }) => ({
+export const CaptionText = styled(Typography)(() => ({
   fontSize: '0.875rem',
   fontWeight: 400,
   color: colors.text.secondary,
@@ -70,7 +70,7 @@ export const CaptionText = styled(Typography)(({ theme }) => ({
 }));
 
 // Small text for fine print
-export const SmallText = styled(Typography)(({ theme }) => ({
+export const SmallText = styled(Typography)(() => ({
   fontSize: '0.75rem',
   fontWeight: 400,
   color: colors.text.disabled,
@@ -78,7 +78,7 @@ export const SmallText = styled(Typography)(({ theme }) => ({
 }));
 
 // Overline text for labels
-export const OverlineText = styled(Typography)(({ theme }) => ({
+export const OverlineText = styled(Typography)(() => ({
   fontSize: '0.75rem',
   fontWeight: 500,
   color: colors.text.secondary,
@@ -133,7 +133,7 @@ export const HeroSubtitle = styled(Typography)(({ theme }) => ({
 }));
 
 // CTRI number styling
-export const CTRINumber = styled(Typography)(({ theme }) => ({
+export const CTRINumber = styled(Typography)(() => ({
   fontSize: '0.875rem',
   fontWeight: 500,
   color: colors.primary.main,
@@ -145,7 +145,7 @@ export const CTRINumber = styled(Typography)(({ theme }) => ({
 }));
 
 // Trial phase text
-export const PhaseText = styled(Typography)<{ phase?: string }>(({ theme, phase }) => {
+export const PhaseText = styled(Typography)<{ phase?: string }>(({ phase }) => {
   const getPhaseColor = (phase?: string) => {
     switch (phase) {
       case 'I': return colors.medical.phase1;
@@ -166,7 +166,7 @@ export const PhaseText = styled(Typography)<{ phase?: string }>(({ theme, phase 
 });
 
 // Status text with color coding
-export const StatusText = styled(Typography)<{ status?: string }>(({ theme, status }) => {
+export const StatusText = styled(Typography)<{ status?: string }>(({ status }) => {
   const getStatusColor = (status?: string) => {
     switch (status) {
       case 'recruiting': return colors.status.recruiting;
@@ -186,7 +186,7 @@ export const StatusText = styled(Typography)<{ status?: string }>(({ theme, stat
 });
 
 // Highlighted text for search results
-export const HighlightedText = styled('span')(({ theme }) => ({
+export const HighlightedText = styled('span')(() => ({
   backgroundColor: colors.status.notYetRecruiting,
   color: 'white',
   padding: '1px 4px',
@@ -195,11 +195,11 @@ export const HighlightedText = styled('span')(({ theme }) => ({
 }));
 
 // Link text
-export const LinkText = styled(Typography)(({ theme }) => ({
+export const LinkText = styled(Typography)(() => ({
   color: colors.primary.main,
   textDecoration: 'none',
   cursor: 'pointer',
-  
+
   '&:hover': {
     textDecoration: 'underline',
   },
@@ -222,7 +222,7 @@ export const SuccessText = styled(Typography)(({ theme }) => ({
 }));
 
 // Truncated text with ellipsis
-export const TruncatedText = styled(Typography)<{ lines?: number }>(({ theme, lines = 2 }) => ({
+export const TruncatedText = styled(Typography)<{ lines?: number }>(({ lines = 2 }) => ({
   display: '-webkit-box',
   WebkitLineClamp: lines,
   WebkitBoxOrient: 'vertical',
@@ -231,7 +231,7 @@ export const TruncatedText = styled(Typography)<{ lines?: number }>(({ theme, li
 }));
 
 // Medical terminology text
-export const MedicalText = styled(Typography)(({ theme }) => ({
+export const MedicalText = styled(Typography)(() => ({
   fontFamily: 'Georgia, serif',
   fontSize: '0.9375rem',
   lineHeight: 1.6,
@@ -239,7 +239,7 @@ export const MedicalText = styled(Typography)(({ theme }) => ({
 }));
 
 // Citation text
-export const CitationText = styled(Typography)(({ theme }) => ({
+export const CitationText = styled(Typography)(() => ({
   fontSize: '0.8125rem',
   fontStyle: 'italic',
   color: colors.text.disabled,

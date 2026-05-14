@@ -4,7 +4,7 @@ import { alpha } from '@mui/material/styles';
 import { colors } from '../../styles/theme';
 
 // Primary action buttons
-export const PrimaryButton = styled(Button)(({ theme }) => ({
+export const PrimaryButton = styled(Button)(() => ({
   borderRadius: 8,
   textTransform: 'none',
   fontWeight: 500,
@@ -23,7 +23,7 @@ export const PrimaryButton = styled(Button)(({ theme }) => ({
 }));
 
 // Secondary action buttons
-export const SecondaryButton = styled(Button)(({ theme }) => ({
+export const SecondaryButton = styled(Button)(() => ({
   borderRadius: 8,
   textTransform: 'none',
   fontWeight: 500,
@@ -38,7 +38,7 @@ export const SecondaryButton = styled(Button)(({ theme }) => ({
 }));
 
 // Ghost/text buttons
-export const GhostButton = styled(Button)(({ theme }) => ({
+export const GhostButton = styled(Button)(() => ({
   borderRadius: 8,
   textTransform: 'none',
   fontWeight: 500,

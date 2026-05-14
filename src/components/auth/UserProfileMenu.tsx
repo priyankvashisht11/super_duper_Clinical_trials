@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Menu,
   MenuItem,
@@ -77,7 +76,7 @@ export function UserProfileMenu({ anchorEl, open, onClose }: UserProfileMenuProp
       <Box sx={{ px: 2, py: 2 }}>
         <Box display="flex" alignItems="center" gap={2}>
           <Avatar
-            src={user.profileImageUrl}
+            {...(user.profileImageUrl ? { src: user.profileImageUrl } : {})}
             sx={{
               width: 48,
               height: 48,

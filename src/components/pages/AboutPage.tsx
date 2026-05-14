@@ -34,7 +34,7 @@ const PageHeader = styled(Box)(({ theme }) => ({
   border: `1px solid ${alpha(colors.primary.main, 0.1)}`,
 }));
 
-const FeatureCard = styled(Card)(({ theme }) => ({
+const FeatureCard = styled(Card)(() => ({
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
@@ -52,7 +52,7 @@ const FeatureCard = styled(Card)(({ theme }) => ({
   },
 }));
 
-const TeamCard = styled(Card)(({ theme }) => ({
+const TeamCard = styled(Card)(() => ({
   textAlign: 'center',
   transition: 'all 0.3s ease',
   border: `1px solid ${alpha(colors.primary.main, 0.1)}`,
@@ -210,7 +210,7 @@ export const AboutPage: React.FC = () => {
       <Fade in timeout={800} style={{ transitionDelay: '200ms' }}>
         <Grid container spacing={2} sx={{ mb: 4 }}>
           {stats.map((stat, index) => (
-            <Grid item xs={6} md={3} key={index}>
+            <Grid size={{ xs: 6, md: 3 }} key={index}>
               <StatsBox>
                 <Typography variant="h3" fontWeight={700}>
                   {stat.value}
@@ -232,7 +232,7 @@ export const AboutPage: React.FC = () => {
           </Typography>
           <Grid container spacing={3}>
             {features.map((feature, index) => (
-              <Grid item xs={12} md={6} lg={4} key={index} sx={{ display: 'flex' }}>
+              <Grid size={{ xs: 12, md: 6, lg: 4 }} key={index} sx={{ display: 'flex' }}>
                 <Grow in timeout={600} style={{ transitionDelay: `${index * 100}ms`, width: '100%' }}>
                   <FeatureCard>
                     <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
@@ -296,7 +296,7 @@ export const AboutPage: React.FC = () => {
           </Typography>
           <Grid container spacing={3}>
             {team.map((member, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
                 <TeamCard>
                   <CardContent>
                     <Avatar

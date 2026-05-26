@@ -23,7 +23,8 @@ export async function authenticateToken(
 ): Promise<void> {
   try {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    // EventSource can't set headers — SSE endpoints pass token as ?token= query param
+    const token = (authHeader && authHeader.split(' ')[1]) || (req.query['token'] as string | undefined);
 
     if (!token) {
       res.status(401).json({

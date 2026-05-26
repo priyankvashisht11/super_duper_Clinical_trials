@@ -6,6 +6,8 @@ import aiRoutes from './routes/ai.routes';
 import researchRoutes from './routes/research.routes';
 import matchRoutes from './routes/match.routes';
 import analysisRoutes from './routes/analysis.routes';
+import edcRoutes from './routes/edc.routes';
+import agentRoutes from './routes/agent.routes';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import notificationRoutes from './routes/notification.routes';
@@ -34,6 +36,8 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/research', researchRoutes);
 app.use('/api/match', matchRoutes);
 app.use('/api/analysis', analysisRoutes);
+app.use('/api/edc', edcRoutes);
+app.use('/api/agent', agentRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

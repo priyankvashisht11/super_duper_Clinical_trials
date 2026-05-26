@@ -156,7 +156,7 @@ export function AuthModal({ open, onClose, defaultTab = 'signin' }: AuthModalPro
       <DialogTitle>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5" fontWeight={600}>
-            Welcome to Clinical IQ
+            Welcome to NexTrial
           </Typography>
           <IconButton onClick={onClose} size="small">
             <CloseIcon />

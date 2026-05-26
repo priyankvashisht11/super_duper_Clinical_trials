@@ -273,12 +273,12 @@ const NewTrialDialog: React.FC<NewTrialDialogProps> = ({ open, onClose, onCreate
           />
           <TextField
             label="Trial Phase"
-            placeholder="e.g. Phase 1, Phase 2, Phase 3"
             value={phase}
             onChange={(e) => setPhase(e.target.value)}
             fullWidth
             select
             SelectProps={{ native: true }}
+            InputLabelProps={{ shrink: true }}
           >
             <option value="">Select phase</option>
             {['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4', 'Observational'].map((p) => (

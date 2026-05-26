@@ -66,7 +66,7 @@ Return this exact JSON:
           Authorization: `Bearer ${process.env['PERPLEXITY_API_KEY'] ?? ''}`,
         },
         body: JSON.stringify({
-          model: 'sonar',
+          model: 'sonar-pro',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.2,
         }),

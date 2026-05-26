@@ -127,7 +127,7 @@ export class ResearchService {
       const response = await axios.post(
         'https://api.perplexity.ai/chat/completions',
         {
-          model: 'sonar',
+          model: 'sonar-pro',
           messages: [
             {
               role: 'system',
@@ -184,7 +184,7 @@ DO NOT include explanations, just return the optimized query terms.`
       const response = await axios.post(
         'https://api.perplexity.ai/chat/completions',
         {
-          model: 'sonar',
+          model: 'sonar-pro',
           messages: [
             {
               role: 'system',
@@ -227,7 +227,7 @@ Return ONLY the optimized search terms, no explanations.`
       const response = await axios.post(
         'https://api.perplexity.ai/chat/completions',
         {
-          model: 'sonar',
+          model: 'sonar-pro',
           messages: [
             {
               role: 'system',
@@ -684,7 +684,7 @@ Be specific and accurate. If NCT ID is not available, create a unique identifier
       const response = await axios.post(
         'https://api.perplexity.ai/chat/completions',
         {
-          model: 'sonar',
+          model: 'sonar-pro',
           messages: [
             {
               role: 'system',
@@ -909,7 +909,7 @@ Be specific and accurate. If PMID is not available, create a unique identifier l
       const response = await axios.post(
         apiUrl,
         {
-          model: 'sonar', // sonar model has web search capabilities
+          model: 'sonar-pro', // sonar model has web search capabilities
           messages: [
             {
               role: 'system',
@@ -1235,7 +1235,7 @@ Be conversational yet professional. Focus on practical, actionable information t
       const response = await axios.post(
         'https://api.perplexity.ai/chat/completions',
         {
-          model: 'sonar',
+          model: 'sonar-pro',
           messages: [
             {
               role: 'system',

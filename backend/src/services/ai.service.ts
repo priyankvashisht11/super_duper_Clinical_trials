@@ -225,7 +225,7 @@ export class AIService {
     4. Regulatory compliance assessment`;
 
     const response = await this.makeRequest({
-      model: 'sonar',
+      model: 'sonar-pro',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
@@ -325,7 +325,7 @@ export class AIService {
     4. Industry standards`;
 
     const response = await this.makeRequest({
-      model: 'sonar',
+      model: 'sonar-pro',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }

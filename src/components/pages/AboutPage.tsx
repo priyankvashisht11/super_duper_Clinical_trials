@@ -144,18 +144,6 @@ export const AboutPage: React.FC = () => {
     },
   ];
 
-  const technologies = [
-    'React',
-    'TypeScript',
-    'Material-UI',
-    'Node.js',
-    'Express',
-    'PostgreSQL',
-    'Prisma',
-    'Perplexity AI',
-    'Docker',
-  ];
-
   return (
     <Box sx={{ p: 4 }}>
       <Fade in timeout={600}>
@@ -163,7 +151,7 @@ export const AboutPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <InfoIcon sx={{ fontSize: 40, mr: 1.5, color: colors.primary.main }} />
             <Typography variant="h4" fontWeight={700} sx={{ color: colors.text.primary }}>
-              About Clinical IQ
+              About NexTrial
             </Typography>
           </Box>
           <Typography 
@@ -186,7 +174,7 @@ export const AboutPage: React.FC = () => {
               mb: 2
             }}
           >
-            Clinical IQ is designed to streamline clinical trials research for medical professionals in India.
+            NexTrial is designed to streamline clinical trials research for medical professionals in India.
             We provide comprehensive access to CTRI trial data, intelligent search capabilities, and AI-powered
             document generation to help physicians make informed decisions and advance medical research.
           </Typography>
@@ -263,29 +251,71 @@ export const AboutPage: React.FC = () => {
         </Box>
       </Fade>
 
-      {/* Technology Stack */}
+      {/* Origin Story */}
       <Fade in timeout={1200} style={{ transitionDelay: '600ms' }}>
-        <Card sx={{ mb: 4 }}>
-          <CardContent>
-            <Typography variant="h5" fontWeight={700} gutterBottom sx={{ mb: 2 }}>
-              Technology Stack
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Built with modern, reliable technologies for optimal performance and scalability
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {technologies.map((tech, index) => (
-                <Chip
-                  key={index}
-                  label={tech}
-                  color="primary"
-                  variant="outlined"
-                  sx={{ fontWeight: 600 }}
-                />
-              ))}
-            </Box>
-          </CardContent>
-        </Card>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h5" fontWeight={700} sx={{ mb: 1 }}>
+            How It Started
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            A family dinner. A frustrated oncologist. A question that wouldn't go away.
+          </Typography>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {[
+              {
+                label: 'THE MOMENT',
+                heading: 'A patient who deserved better',
+                body: `Dr. Verma had just seen a 44-year-old with relapsed lymphoma — a man with two daughters in school, an engineer, still sharp. The standard of care had failed him. There were trials running in India that he likely qualified for. But finding them, matching him, navigating CTRI, assembling the regulatory paperwork — it would take weeks of manual work that the clinic simply didn't have. The patient ran out of time. That case never left the room.`,
+                color: '#0047AB',
+              },
+              {
+                label: 'THE PROBLEM',
+                heading: 'India runs 2% of the world\'s trials. It shouldn\'t.',
+                body: `India has 1.4 billion people, some of the world's most skilled oncologists and cardiologists, and a disease burden that makes it one of the most valuable trial populations on earth. Yet the infrastructure for running trials is buried in fax machines, PDF attachments, and disconnected portals — CTRI here, CDSCO Form 44 there, ICMR Ethics somewhere else. A PI spending 60% of their time on paperwork is a PI spending 60% of their time not treating patients.`,
+                color: '#00897B',
+              },
+              {
+                label: 'THE BUILD',
+                heading: 'What if the paperwork just... disappeared?',
+                body: `We started with a simple question: what would it look like if a PI could go from a patient referral to a matched trial in the same afternoon? We pulled apart every step — literature search, protocol design, CTRI registration, CDSCO Form 44, IEC submissions, data capture — and asked where the friction actually lived. Most of it wasn't the science. It was the administration. That's what we set out to fix.`,
+                color: '#7C3AED',
+              },
+              {
+                label: 'THE NORTH STAR',
+                heading: 'Every day a trial sits idle is a patient who waited.',
+                body: `We built NexTrial so that the next time Dr. Anuj has a patient who qualifies for a trial, the answer takes minutes — not weeks. So that a PI at a tier-2 hospital in Pune has the same regulatory infrastructure as a site at AIIMS Delhi. So that India stops exporting its disease burden and starts leading the science. That's the only metric we care about.`,
+                color: '#D97706',
+              },
+            ].map((beat, i) => (
+              <Card
+                key={i}
+                variant="outlined"
+                sx={{
+                  borderLeft: `4px solid ${beat.color}`,
+                  borderRadius: 2,
+                  transition: 'box-shadow 0.2s',
+                  '&:hover': { boxShadow: `0 4px 20px ${alpha(beat.color, 0.15)}` },
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 800, color: beat.color, letterSpacing: '0.1em', display: 'block', mb: 0.75 }}
+                  >
+                    {beat.label}
+                  </Typography>
+                  <Typography variant="h6" fontWeight={700} sx={{ mb: 1.5, color: '#0A1628' }}>
+                    {beat.heading}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.85, fontSize: '0.95rem' }}>
+                    {beat.body}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        </Box>
       </Fade>
 
       {/* Team */}
@@ -345,14 +375,14 @@ export const AboutPage: React.FC = () => {
               Our Mission
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8, mb: 2 }}>
-              Clinical IQ's mission is to democratize access to clinical trials information and empower Indian physicians with
+              NexTrial's mission is to democratize access to clinical trials information and empower Indian physicians with
               cutting-edge AI tools that accelerate medical research, improve patient outcomes, and
               advance healthcare innovation across the country.
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8 }}>
               We believe that every physician should have access to comprehensive, up-to-date clinical
               trials data and intelligent tools that help them make informed decisions for their patients
-              and contribute to the advancement of medical science through Clinical IQ.
+              and contribute to the advancement of medical science through NexTrial.
             </Typography>
           </CardContent>
         </Card>

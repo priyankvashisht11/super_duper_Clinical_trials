@@ -216,6 +216,7 @@ model User {
   preferences                 UserPreferences?
   passwordResetTokens         PasswordResetToken[]
   emailVerificationTokens     EmailVerificationToken[]
+  agentSessions               AgentSession[]
   
   @@index([email])
   @@index([role])
@@ -304,10 +305,146 @@ model EmailVerificationToken {
   expiresAt   DateTime  @map("expires_at")
   used        Boolean   @default(false)
   createdAt   DateTime  @default(now()) @map("created_at")
-  
+
   // Relations
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([token])
   @@map("email_verification_tokens")
+}
+
+// ── EDC / Sprint 7 ─────────────────────────────────────────────────────────────
+
+model CrfForm {
+  id          String     @id @default(uuid())
+  name        String     @db.VarChar(200)
+  orderIndex  Int        @default(0) @map("order_index")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  fields      CrfField[]
+  entries     EdcEntry[]
+
+  @@map("crf_forms")
+}
+
+model CrfField {
+  id         String   @id @default(uuid())
+  formId     String   @map("form_id")
+  type       String   @db.VarChar(20)
+  label      String   @db.VarChar(300)
+  required   Boolean  @default(false)
+  options    String[]
+  orderIndex Int      @default(0) @map("order_index")
+
+  form       CrfForm  @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@map("crf_fields")
+}
+
+model EdcPatient {
+  id         String     @id @default(uuid())
+  subjectId  String     @unique @map("subject_id") @db.VarChar(50)
+  site       String     @db.VarChar(200)
+  status     String     @default("screening") @db.VarChar(20)
+  enrolledAt DateTime   @default(now()) @map("enrolled_at")
+
+  entries    EdcEntry[]
+
+  @@map("edc_patients")
+}
+
+model EdcEntry {
+  id          String    @id @default(uuid())
+  patientId   String    @map("patient_id")
+  formId      String    @map("form_id")
+  visitDate   String    @db.VarChar(20)
+  data        Json
+  submittedAt DateTime  @default(now()) @map("submitted_at")
+  signerName  String?   @map("signer_name") @db.VarChar(200)
+  signerRole  String?   @map("signer_role") @db.VarChar(100)
+  signedAt    DateTime? @map("signed_at")
+
+  patient     EdcPatient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  form        CrfForm    @relation(fields: [formId], references: [id])
+
+  @@map("edc_entries")
+}
+
+model EdcAuditLog {
+  id        String   @id @default(uuid())
+  timestamp DateTime @default(now())
+  action    String   @db.VarChar(50)
+  entity    String   @db.VarChar(200)
+  detail    String   @db.Text
+
+  @@map("edc_audit_logs")
+}
+
+// ── Agentic AI ────────────────────────────────────────────────────────────────
+
+model AgentSession {
+  id        String         @id @default(uuid())
+  userId    String         @map("user_id")
+  tab       String         @db.VarChar(30)   // research | match | regulatory | edc | analysis | protocol
+  title     String         @db.VarChar(300)
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  messages  AgentMessage[]
+  artifacts AgentArtifact[]
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tab])
+  @@map("agent_sessions")
+}
+
+model AgentMessage {
+  id        String   @id @default(uuid())
+  sessionId String   @map("session_id")
+  role      String   @db.VarChar(20)   // user | assistant | tool
+  content   String   @db.Text
+  toolName  String?  @map("tool_name") @db.VarChar(100)
+  toolInput Json?    @map("tool_input")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session   AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("agent_messages")
+}
+
+model AgentArtifact {
+  id        String   @id @default(uuid())
+  sessionId String   @map("session_id")
+  name      String   @db.VarChar(200)
+  type      String   @db.VarChar(30)   // markdown | pdf | json | csv
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session   AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("agent_artifacts")
+}
+
+// GCP-compliant append-only audit trail for every agent action
+// Required for 21 CFR Part 11 / ICH E6(R2) — never updated or deleted
+model AgentAuditLog {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  sessionId  String?  @map("session_id")
+  action     String   @db.VarChar(50)   // PLAN | TOOL_CALL | SYNTHESIS | ARTIFACT | ERROR
+  toolName   String?  @map("tool_name") @db.VarChar(100)
+  queryHash  String?  @map("query_hash") @db.VarChar(16)  // first 16 chars of SHA-256
+  status     String   @db.VarChar(20)   // ok | error
+  durationMs Int?     @map("duration_ms")
+  meta       Json?                       // extra structured data (count, size, etc.)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("agent_audit_logs")
 }

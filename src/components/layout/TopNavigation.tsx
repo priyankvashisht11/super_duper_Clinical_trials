@@ -88,7 +88,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
         {/* Logo */}
         <Box
           sx={{ display: 'flex', alignItems: 'center', gap: 0.5, cursor: 'pointer', flexShrink: 0 }}
-          onClick={() => navigate(isAuthenticated ? '/dashboard' : '/')}
+          onClick={() => navigate('/')}
         >
           {/* N icon mark */}
           <Box

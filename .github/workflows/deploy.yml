@@ -2,8 +2,8 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [master]   # your working branch
-  workflow_dispatch:      # allow manual trigger from GitHub UI
+    branches: [master]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── 2. TypeScript check (frontend) ───────────────────────────────────────
+      # ── 2. TypeScript check ──────────────────────────────────────────────────
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -28,13 +28,14 @@ jobs:
       - name: TypeScript check
         run: npx tsc --noEmit
 
-      # ── 3. Build frontend static files ───────────────────────────────────────
+      # ── 3. Build frontend ────────────────────────────────────────────────────
       - name: Build frontend
         run: npm run build
         env:
           VITE_API_URL: https://${{ secrets.DOMAIN }}/api
 
-      # ── 4. Upload frontend build to server ───────────────────────────────────
+      # ── 4. Upload frontend build to Droplet ──────────────────────────────────
+      # SCP as deploy user → /var/www/nextrial/ (deploy user is in www-data group)
       - name: Upload frontend build
         uses: appleboy/scp-action@master
         with:
@@ -43,7 +44,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "dist/"
           target: "/var/www/nextrial/"
-          strip_components: 1   # puts files directly in /var/www/nextrial/
+          strip_components: 1
 
       # ── 5. Deploy backend via SSH ─────────────────────────────────────────────
       - name: Deploy backend
@@ -59,16 +60,28 @@ jobs:
             # Pull latest code
             git pull origin master
 
-            # Rebuild and restart backend + services
+            # Rebuild and restart backend
             docker compose -f docker-compose.prod.yml up --build -d backend
 
-            # Wait and health-check
-            sleep 8
-            curl -sf http://localhost:3001/health || (echo "Backend health check failed" && exit 1)
+            # Health check with retries — poll until backend is up (up to 60s)
+            echo "Waiting for backend..."
+            for i in $(seq 1 12); do
+              if curl -sf http://localhost:3001/health > /dev/null 2>&1; then
+                echo "✅ Backend healthy after $((i * 5))s"
+                exit 0
+              fi
+              sleep 5
+            done
+            echo "❌ Backend health check failed after 60s"
+            docker compose -f docker-compose.prod.yml logs --tail=50 backend
+            exit 1
 
-            echo "✅ Deploy complete — $(date)"
-
-      # ── 6. Notify (optional — add Slack/email webhook here) ──────────────────
+      # ── 6. Deploy summary ────────────────────────────────────────────────────
       - name: Deploy summary
         if: always()
-        run: echo "Deploy status — ${{ job.status }}"
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Deploy succeeded — https://${{ secrets.DOMAIN }}"
+          else
+            echo "❌ Deploy failed — check logs above"
+          fi

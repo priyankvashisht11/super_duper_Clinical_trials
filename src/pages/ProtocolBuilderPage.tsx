@@ -158,7 +158,7 @@ const SampleSizeCalculator: React.FC<{ onInsert: (text: string) => void }> = ({ 
         n = Math.ceil(events / pEvent / 2);
       }
       const perArm = Math.ceil(n / (1 - dropoutFrac));
-      setResult({ perArm, total: perArm * nArms, events });
+      setResult({ perArm, total: perArm * nArms, ...(events !== undefined ? { events } : {}) });
     } catch (e: any) { setCalcError(e.message); setResult(null); }
   };
 

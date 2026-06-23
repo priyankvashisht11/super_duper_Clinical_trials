@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Box } from '@mui/material';
 import { TopNavigation } from '../components/layout';
 import { AgentChatPanel } from '../components/agent/AgentChatPanel';

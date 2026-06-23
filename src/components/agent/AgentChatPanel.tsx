@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Box, Typography, InputBase, IconButton, Paper, Stack, Chip,
-  CircularProgress, Button, Tooltip, Collapse, alpha, Divider,
+  CircularProgress, Button, Tooltip, Collapse, Divider,
 } from '@mui/material';
 import {
   Send as SendIcon, AutoAwesome as AIIcon, CheckCircle as DoneIcon,
-  RadioButtonUnchecked as PendingIcon, Circle as ActiveIcon,
+  RadioButtonUnchecked as PendingIcon,
   Download as DownloadIcon, History as HistoryIcon,
   ExpandMore as ExpandIcon, ExpandLess as CollapseIcon,
   Science as PubMedIcon, LocalHospital as TrialIcon,
@@ -13,7 +13,7 @@ import {
   Stop as StopIcon,
 } from '@mui/icons-material';
 import {
-  type AgentTab, type PlannedStep, type AgentSession,
+  type AgentTab, type AgentSession,
   createSession, listSessions, getSession, streamRun, artifactDownloadUrl,
 } from '../../services/agentService';
 
@@ -440,7 +440,7 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({ tab, title, sugg
       tab,
       query: q,
       onEvent: (event) => {
-        setMessages(prev => prev.map(m => {
+        setMessages(prev => (prev.map((m): AgentMessage => {
           if (m.id !== asstMsgId) return m;
           switch (event.type) {
             case 'plan':
@@ -448,15 +448,17 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({ tab, title, sugg
             case 'tool_start':
               return { ...m, steps: m.steps.map(s => s.step === event.payload.step ? { ...s, status: 'running' as const } : s) };
             case 'tool_done':
-              return { ...m, steps: m.steps.map(s => s.step === event.payload.step ? { ...s, status: (event.payload.status === 'ok' ? 'done' : 'error') as any, count: event.payload.count } : s) };
+              return { ...m, steps: (m.steps.map(s => s.step === event.payload.step ? { ...s, status: (event.payload.status === 'ok' ? 'done' : 'error') as 'done' | 'error', count: event.payload.count } : s) as AgentMessage['steps']) };
             case 'synthesis_chunk':
               return { ...m, synthesis: m.synthesis + (event.payload.text ?? '') };
-            case 'artifact':
-              return { ...m, artifacts: [...m.artifacts, { id: event.payload.id!, name: event.payload.name!, type: 'markdown', size: event.payload.size }] };
+            case 'artifact': {
+              const art: { id: string; name: string; type: string; size?: number } = { id: event.payload.id!, name: event.payload.name!, type: 'markdown', ...(event.payload.size !== undefined ? { size: event.payload.size } : {}) };
+              return { ...m, artifacts: [...m.artifacts, art] };
+            }
             default:
               return m;
           }
-        }));
+        }) as AgentMessage[]));
       },
       onDone: () => {
         setMessages(prev => prev.map(m => m.id === asstMsgId ? { ...m, streaming: false } : m));
@@ -522,7 +524,7 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({ tab, title, sugg
 
           {/* Session history — subtle link below */}
           <Box sx={{ mt: 3 }}>
-            <SessionSidebar tab={tab} onSelect={loadSession} currentId={undefined} />
+            <SessionSidebar tab={tab} onSelect={(id) => { void loadSession(id); }} />
           </Box>
         </Box>
       )}
@@ -541,7 +543,7 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({ tab, title, sugg
                 + New
               </Button>
             </Tooltip>
-            <SessionSidebar tab={tab} onSelect={loadSession} currentId={sessionId ?? undefined} />
+            <SessionSidebar tab={tab} onSelect={(id) => { void loadSession(id); }} {...(sessionId ? { currentId: sessionId } : {})} />
           </Box>
 
           {/* Messages */}

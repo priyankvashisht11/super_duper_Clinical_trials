@@ -336,8 +336,8 @@ const DataEntry: React.FC<{ state: CollectState; onChange: (s: CollectState) => 
     const val = formData[ff.id] ?? ''; const set = (v: any) => setFormData(p => ({ ...p, [ff.id]: v }));
     const label = `${ff.label}${ff.required ? ' *' : ''}`;
     switch (ff.type) {
-      case 'text':    return <TextField key={ff.id} fullWidth size="small" label={label} value={val} onChange={e => set(e.target.value)} placeholder={ff.placeholder} sx={inputSx} />;
-      case 'textarea':return <TextField key={ff.id} fullWidth size="small" label={label} value={val} onChange={e => set(e.target.value)} multiline minRows={3} placeholder={ff.placeholder} sx={inputSx} />;
+      case 'text':    return <TextField key={ff.id} fullWidth size="small" label={label} value={val} onChange={e => set(e.target.value)} {...(ff.placeholder ? { placeholder: ff.placeholder } : {})} sx={inputSx} />;
+      case 'textarea':return <TextField key={ff.id} fullWidth size="small" label={label} value={val} onChange={e => set(e.target.value)} multiline minRows={3} {...(ff.placeholder ? { placeholder: ff.placeholder } : {})} sx={inputSx} />;
       case 'number':  return <TextField key={ff.id} fullWidth size="small" label={label} type="number" value={val} onChange={e => set(e.target.value)} inputProps={{ min: ff.min, max: ff.max }} sx={inputSx} />;
       case 'date':    return <TextField key={ff.id} fullWidth size="small" label={label} type="date" value={val} onChange={e => set(e.target.value)} InputLabelProps={{ shrink: true }} sx={inputSx} />;
       case 'select':  return (
@@ -543,7 +543,6 @@ const HistoryTab: React.FC<{ commits: Commit[]; onRestore: (snapshot: CollectSta
               {selected.changes.map((line, i) => {
                 const isAdd = line.startsWith('+');
                 const isDel = line.startsWith('-');
-                const isMod = line.startsWith('~');
                 return (
                   <Box key={i} sx={{ px: 2, py: 0.75, display: 'flex', alignItems: 'center', gap: 1.5, borderTop: i > 0 ? '1px solid #F0F4FF' : 'none', backgroundColor: isAdd ? alpha('#059669', 0.04) : isDel ? alpha('#DC2626', 0.04) : alpha('#D97706', 0.04) }}>
                     <Typography sx={{ fontSize: '0.9rem', fontWeight: 800, color: isAdd ? '#059669' : isDel ? '#DC2626' : '#D97706', width: 16, flexShrink: 0 }}>{line[0]}</Typography>

@@ -16,6 +16,8 @@ RUN npx tsc --noEmitOnError false || true
 FROM node:20-alpine
 WORKDIR /app
 
+RUN apk add --no-cache openssl
+
 ENV NODE_ENV=production
 
 COPY package*.json ./

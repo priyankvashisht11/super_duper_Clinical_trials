@@ -15,7 +15,15 @@ import {
   Send as SendIcon,
   ChevronRight as NextIcon,
   ChevronLeft as PrevIcon,
+  Edit as EditIcon,
+  Visibility as ViewIcon,
+  Calculate as CalculateIcon,
+  Close as CloseIcon,
+  ContentCopy as CopyIcon,
 } from '@mui/icons-material';
+import { Select, FormControl, InputLabel } from '@mui/material';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { ProtocolProvider, useProtocol } from '../contexts/ProtocolContext';
 
 // ── Section definitions ───────────────────────────────────────────────────────
@@ -94,6 +102,205 @@ const NavItem: React.FC<{
   </Box>
 );
 
+// ── Sample Size Calculator (§5 only) ─────────────────────────────────────────
+
+const Z_ALPHA: Record<string, number> = { '0.01': 2.576, '0.025': 2.24, '0.05': 1.96, '0.10': 1.645 };
+const Z_BETA: Record<string, number> = { '0.70': 0.524, '0.75': 0.674, '0.80': 0.842, '0.85': 1.036, '0.90': 1.282, '0.95': 1.645 };
+
+const SampleSizeCalculator: React.FC<{ onInsert: (text: string) => void }> = ({ onInsert }) => {
+  const [open, setOpen] = useState(false);
+  const [design, setDesign] = useState('superiority');
+  const [endpoint, setEndpoint] = useState('continuous');
+  const [alphaVal, setAlphaVal] = useState('0.05');
+  const [powerVal, setPowerVal] = useState('0.80');
+  const [meanDiff, setMeanDiff] = useState('');
+  const [sd, setSd] = useState('');
+  const [niMargin, setNiMargin] = useState('');
+  const [prop1, setProp1] = useState('');
+  const [prop2, setProp2] = useState('');
+  const [hr, setHr] = useState('');
+  const [eventRate, setEventRate] = useState('');
+  const [dropout, setDropout] = useState('10');
+  const [arms, setArms] = useState('2');
+  const [result, setResult] = useState<{ perArm: number; total: number; events?: number } | null>(null);
+  const [calcError, setCalcError] = useState('');
+
+  const calculate = () => {
+    setCalcError('');
+    const za = Z_ALPHA[alphaVal] ?? 1.96;
+    const zb = Z_BETA[powerVal] ?? 0.842;
+    const dropoutFrac = Math.min(0.99, (Number(dropout) || 0) / 100);
+    const nArms = Math.max(1, Number(arms) || 2);
+    let n = 0; let events: number | undefined;
+    try {
+      if (endpoint === 'continuous') {
+        const delta = Number(meanDiff); const sigma = Number(sd);
+        if (!delta || !sigma || sigma <= 0) throw new Error('Enter a valid mean difference and SD');
+        let eff = delta;
+        if (design !== 'superiority') {
+          const nm = Number(niMargin);
+          eff = Math.abs(delta) - Math.abs(nm);
+          if (eff <= 0) throw new Error('Effect size must exceed the NI/equivalence margin');
+        }
+        n = Math.ceil(2 * sigma ** 2 * (za + zb) ** 2 / eff ** 2);
+      } else if (endpoint === 'binary') {
+        const p1 = Number(prop1) / 100; const p2 = Number(prop2) / 100;
+        if (!p1 || !p2 || p1 <= 0 || p2 <= 0) throw new Error('Enter valid proportions (0–100)');
+        const diff = Math.abs(p1 - p2);
+        if (diff < 0.001) throw new Error('Proportions must differ');
+        const pBar = (p1 + p2) / 2;
+        n = Math.ceil((za * Math.sqrt(2 * pBar * (1 - pBar)) + zb * Math.sqrt(p1 * (1 - p1) + p2 * (1 - p2))) ** 2 / diff ** 2);
+      } else {
+        const hazardRatio = Number(hr); const pEvent = Number(eventRate) / 100;
+        if (!hazardRatio || hazardRatio <= 0 || hazardRatio === 1) throw new Error('Enter a valid hazard ratio (≠ 1)');
+        if (!pEvent || pEvent <= 0) throw new Error('Enter expected event rate (%)');
+        events = Math.ceil(4 * (za + zb) ** 2 / Math.log(hazardRatio) ** 2);
+        n = Math.ceil(events / pEvent / 2);
+      }
+      const perArm = Math.ceil(n / (1 - dropoutFrac));
+      setResult({ perArm, total: perArm * nArms, events });
+    } catch (e: any) { setCalcError(e.message); setResult(null); }
+  };
+
+  const generateText = () => {
+    if (!result) return;
+    const pct = Math.round(Number(powerVal) * 100);
+    let body = '';
+    if (endpoint === 'continuous') {
+      body = `A total of ${result.total} participants (${result.perArm} per arm, ${arms} arms) will provide ${pct}% statistical power to detect a mean difference of ${meanDiff} (SD ${sd})${design !== 'superiority' ? `, with a ${design === 'non_inferiority' ? 'non-inferiority' : 'equivalence'} margin of ${niMargin},` : ''} at a two-sided significance level of α = ${alphaVal}. The sample size was estimated using a two-sample t-test.`;
+    } else if (endpoint === 'binary') {
+      body = `A total of ${result.total} participants (${result.perArm} per arm, ${arms} arms) will provide ${pct}% power to detect a difference in response rates from ${prop1}% to ${prop2}% at α = ${alphaVal} (two-sided), using Fleiss' formula for two independent proportions.`;
+    } else {
+      body = `A total of ${result.total} participants (${result.perArm} per arm, ${arms} arms), expected to yield ${result.events} events, will provide ${pct}% power to detect a hazard ratio of ${hr} (event rate ${eventRate}%) at α = ${alphaVal} (Schoenfeld log-rank formula).`;
+    }
+    const full = `**Sample Size Calculation**\n\n${body} Accounting for an anticipated ${dropout}% dropout/loss-to-follow-up rate, the adjusted total sample size is **${result.total} participants**.`;
+    onInsert(full);
+    setOpen(false);
+  };
+
+  const inputSx = { '& .MuiOutlinedInput-root': { fontSize: '0.85rem', backgroundColor: '#fff' } };
+
+  return (
+    <Box sx={{ mb: 3 }}>
+      {!open ? (
+        <Box onClick={() => setOpen(true)} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 2, borderRadius: 2, border: '1px dashed', borderColor: alpha('#0047AB', 0.35), backgroundColor: alpha('#0047AB', 0.025), cursor: 'pointer', '&:hover': { backgroundColor: alpha('#0047AB', 0.05), borderColor: '#0047AB' }, transition: 'all 0.15s' }}>
+          <CalculateIcon sx={{ color: '#0047AB', fontSize: 22 }} />
+          <Box sx={{ flex: 1 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#0047AB' }}>Sample Size Calculator</Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#546E7A', mt: 0.25 }}>ICH E9(R1) compliant · Superiority · Non-inferiority · Survival · Click to open</Typography>
+          </Box>
+          <Chip label="ICH E9(R1)" size="small" sx={{ fontSize: '0.62rem', height: 18, backgroundColor: '#EFF6FF', color: '#0047AB', fontWeight: 700 }} />
+        </Box>
+      ) : (
+        <Box sx={{ border: '1.5px solid #0047AB', borderRadius: 2.5, p: 3, backgroundColor: '#FAFCFF' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+              <CalculateIcon sx={{ color: '#0047AB', fontSize: 22 }} />
+              <Typography sx={{ fontWeight: 800, fontSize: '0.95rem', color: '#0047AB' }}>Sample Size Calculator</Typography>
+              <Chip label="ICH E9(R1)" size="small" sx={{ fontSize: '0.62rem', height: 18, backgroundColor: '#EFF6FF', color: '#0047AB', fontWeight: 700 }} />
+            </Box>
+            <IconButton size="small" onClick={() => setOpen(false)} sx={{ color: '#90A4AE' }}>
+              <CloseIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Box>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.75 }}>
+            <FormControl size="small" sx={inputSx}>
+              <InputLabel>Study Design</InputLabel>
+              <Select value={design} label="Study Design" onChange={e => setDesign(e.target.value)}>
+                <MenuItem value="superiority">Superiority</MenuItem>
+                <MenuItem value="non_inferiority">Non-inferiority</MenuItem>
+                <MenuItem value="equivalence">Equivalence</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={inputSx}>
+              <InputLabel>Primary Endpoint</InputLabel>
+              <Select value={endpoint} label="Primary Endpoint" onChange={e => { setEndpoint(e.target.value); setResult(null); }}>
+                <MenuItem value="continuous">Continuous (means)</MenuItem>
+                <MenuItem value="binary">Binary (proportions)</MenuItem>
+                <MenuItem value="survival">Survival / time-to-event</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={inputSx}>
+              <InputLabel>Significance (α)</InputLabel>
+              <Select value={alphaVal} label="Significance (α)" onChange={e => setAlphaVal(e.target.value)}>
+                <MenuItem value="0.01">0.01 (1%)</MenuItem>
+                <MenuItem value="0.025">0.025 (2.5%)</MenuItem>
+                <MenuItem value="0.05">0.05 (5%) — standard</MenuItem>
+                <MenuItem value="0.10">0.10 (10%)</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={inputSx}>
+              <InputLabel>Power (1−β)</InputLabel>
+              <Select value={powerVal} label="Power (1−β)" onChange={e => setPowerVal(e.target.value)}>
+                {['0.70','0.75','0.80','0.85','0.90','0.95'].map(p => (
+                  <MenuItem key={p} value={p}>{Math.round(Number(p)*100)}%{p === '0.80' ? ' — standard' : ''}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {endpoint === 'continuous' && <>
+              <TextField size="small" label="Mean difference (δ)" value={meanDiff} onChange={e => setMeanDiff(e.target.value)} type="number" placeholder="e.g. 5" sx={inputSx} />
+              <TextField size="small" label="Std deviation (σ)" value={sd} onChange={e => setSd(e.target.value)} type="number" placeholder="e.g. 10" sx={inputSx} />
+              {design !== 'superiority' && <TextField size="small" label="NI / Equivalence margin" value={niMargin} onChange={e => setNiMargin(e.target.value)} type="number" sx={{ ...inputSx, gridColumn: 'span 2' }} />}
+            </>}
+
+            {endpoint === 'binary' && <>
+              <TextField size="small" label="Control proportion (%)" value={prop1} onChange={e => setProp1(e.target.value)} type="number" placeholder="e.g. 30" sx={inputSx} />
+              <TextField size="small" label="Treatment proportion (%)" value={prop2} onChange={e => setProp2(e.target.value)} type="number" placeholder="e.g. 50" sx={inputSx} />
+            </>}
+
+            {endpoint === 'survival' && <>
+              <TextField size="small" label="Hazard ratio (HR)" value={hr} onChange={e => setHr(e.target.value)} type="number" placeholder="e.g. 0.70" sx={inputSx} />
+              <TextField size="small" label="Expected event rate (%)" value={eventRate} onChange={e => setEventRate(e.target.value)} type="number" placeholder="e.g. 65" sx={inputSx} />
+            </>}
+
+            <TextField size="small" label="Dropout / attrition (%)" value={dropout} onChange={e => setDropout(e.target.value)} type="number" placeholder="10" sx={inputSx} />
+            <TextField size="small" label="Number of arms" value={arms} onChange={e => setArms(e.target.value)} type="number" placeholder="2" sx={inputSx} />
+          </Box>
+
+          {calcError && <Typography sx={{ color: '#DC2626', fontSize: '0.8rem', mt: 1.5 }}>⚠ {calcError}</Typography>}
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 2.5, flexWrap: 'wrap' }}>
+            <Button variant="contained" onClick={calculate} size="small" sx={{ background: '#0047AB', fontWeight: 700, px: 2.5, boxShadow: 'none', borderRadius: 1.5 }}>
+              Calculate
+            </Button>
+            {result && (
+              <>
+                <Box sx={{ px: 2, py: 1, borderRadius: 2, backgroundColor: '#EBF5FB', border: '1px solid #90CAF9', display: 'flex', gap: 2 }}>
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Typography sx={{ fontSize: '0.65rem', color: '#546E7A', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Per arm</Typography>
+                    <Typography sx={{ fontSize: '1.1rem', fontWeight: 800, color: '#0047AB', lineHeight: 1 }}>{result.perArm}</Typography>
+                  </Box>
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Typography sx={{ fontSize: '0.65rem', color: '#546E7A', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total</Typography>
+                    <Typography sx={{ fontSize: '1.1rem', fontWeight: 800, color: '#0047AB', lineHeight: 1 }}>{result.total}</Typography>
+                  </Box>
+                  {result.events && (
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography sx={{ fontSize: '0.65rem', color: '#546E7A', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Events</Typography>
+                      <Typography sx={{ fontSize: '1.1rem', fontWeight: 800, color: '#0047AB', lineHeight: 1 }}>{result.events}</Typography>
+                    </Box>
+                  )}
+                </Box>
+                <Button size="small" variant="outlined" onClick={generateText} startIcon={<CopyIcon sx={{ fontSize: '14px !important' }} />} sx={{ fontWeight: 700, borderColor: '#0047AB', color: '#0047AB', fontSize: '0.78rem', borderRadius: 1.5 }}>
+                  Insert into section
+                </Button>
+              </>
+            )}
+          </Box>
+          <Typography sx={{ fontSize: '0.7rem', color: '#90A4AE', mt: 1.5 }}>
+            Formulas: two-sample t-test (continuous) · Fleiss (binary) · Schoenfeld log-rank (survival)
+          </Typography>
+        </Box>
+      )}
+    </Box>
+  );
+};
+
 // ── Section workspace ─────────────────────────────────────────────────────────
 
 const SectionWorkspace: React.FC<{ sectionNum: string }> = ({ sectionNum }) => {
@@ -105,6 +312,7 @@ const SectionWorkspace: React.FC<{ sectionNum: string }> = ({ sectionNum }) => {
   const protocolSection = protocol?.sections?.find(s => s.sectionNumber === sectionNum);
 
   const [text, setText] = useState('');
+  const [editMode, setEditMode] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [aiQuery, setAiQuery] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
@@ -119,6 +327,7 @@ const SectionWorkspace: React.FC<{ sectionNum: string }> = ({ sectionNum }) => {
     setSavedAt(null);
     setAiResponse('');
     setAiQuery('');
+    setEditMode(false);
   }, [sectionNum, protocolSection?.id]);
 
   const scheduleAutoSave = useCallback(
@@ -231,6 +440,16 @@ const SectionWorkspace: React.FC<{ sectionNum: string }> = ({ sectionNum }) => {
         </Typography>
       </Box>
 
+      {/* §5 — Sample Size Calculator */}
+      {sectionNum === '5' && (
+        <SampleSizeCalculator
+          onInsert={(txt) => {
+            const joined = text ? `${text}\n\n${txt}` : txt;
+            handleChange(joined);
+          }}
+        />
+      )}
+
       {/* Empty state — generate CTA */}
       {!text && !generating && (
         <Box
@@ -294,43 +513,130 @@ const SectionWorkspace: React.FC<{ sectionNum: string }> = ({ sectionNum }) => {
         </Box>
       )}
 
-      {/* Content editor */}
+      {/* Content — view / edit toggle */}
       {text && !generating && (
         <Box sx={{ mb: 4 }}>
-          <TextField
-            multiline
-            fullWidth
-            value={text}
-            onChange={(e) => handleChange(e.target.value)}
-            minRows={14}
-            maxRows={40}
-            placeholder={`Write your ${sectionDef.title} here…`}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                fontSize: '0.9375rem',
-                lineHeight: 1.75,
-                fontFamily: '"Inter", system-ui, sans-serif',
-                color: '#0A1628',
-                '& fieldset': { borderColor: '#E8EDF5' },
-                '&:hover fieldset': { borderColor: '#C5D0E0' },
-                '&.Mui-focused fieldset': { borderColor: '#0047AB', borderWidth: '1.5px' },
-              },
-            }}
-          />
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 1.25 }}>
-            <Typography sx={{ fontSize: '0.72rem', color: '#B0BEC5' }}>
-              {savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : 'Saving…'}
-            </Typography>
-            <Button
-              size="small"
-              startIcon={<AIIcon sx={{ fontSize: '14px !important' }} />}
-              onClick={handleGenerate}
-              sx={{ fontSize: '0.72rem', color: '#7C3AED', py: 0.25, '&:hover': { backgroundColor: alpha('#7C3AED', 0.06) } }}
-            >
-              Regenerate
-            </Button>
+          {/* Toolbar */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+            <Box sx={{ display: 'flex', gap: 0.75 }}>
+              <Button
+                size="small"
+                startIcon={<ViewIcon sx={{ fontSize: '14px !important' }} />}
+                onClick={() => setEditMode(false)}
+                sx={{
+                  fontSize: '0.72rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: 1.5,
+                  backgroundColor: !editMode ? alpha('#0047AB', 0.08) : 'transparent',
+                  color: !editMode ? '#0047AB' : '#90A4AE',
+                  '&:hover': { backgroundColor: alpha('#0047AB', 0.1) },
+                }}
+              >
+                Preview
+              </Button>
+              <Button
+                size="small"
+                startIcon={<EditIcon sx={{ fontSize: '14px !important' }} />}
+                onClick={() => setEditMode(true)}
+                sx={{
+                  fontSize: '0.72rem', fontWeight: 600, px: 1.5, py: 0.5, borderRadius: 1.5,
+                  backgroundColor: editMode ? alpha('#0047AB', 0.08) : 'transparent',
+                  color: editMode ? '#0047AB' : '#90A4AE',
+                  '&:hover': { backgroundColor: alpha('#0047AB', 0.1) },
+                }}
+              >
+                Edit
+              </Button>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Typography sx={{ fontSize: '0.72rem', color: '#B0BEC5' }}>
+                {savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : 'Saving…'}
+              </Typography>
+              <Button
+                size="small"
+                startIcon={<AIIcon sx={{ fontSize: '14px !important' }} />}
+                onClick={handleGenerate}
+                sx={{ fontSize: '0.72rem', color: '#7C3AED', py: 0.25, '&:hover': { backgroundColor: alpha('#7C3AED', 0.06) } }}
+              >
+                Regenerate
+              </Button>
+            </Box>
           </Box>
+
+          {/* Preview — rendered markdown */}
+          {!editMode && (
+            <Box
+              onClick={() => setEditMode(true)}
+              sx={{
+                border: '1px solid #E8EDF5',
+                borderRadius: 2,
+                px: 4,
+                py: 3.5,
+                backgroundColor: '#ffffff',
+                cursor: 'text',
+                minHeight: 300,
+                '&:hover': { borderColor: '#C5D0E0' },
+                // Markdown typography
+                '& h1,& h2,& h3,& h4': { color: '#0A1628', fontWeight: 700, lineHeight: 1.35, mt: 3, mb: 1 },
+                '& h1': { fontSize: '1.35rem', borderBottom: '1px solid #E8EDF5', pb: 1 },
+                '& h2': { fontSize: '1.1rem' },
+                '& h3': { fontSize: '0.95rem', color: '#0047AB' },
+                '& h4': { fontSize: '0.875rem' },
+                '& p': { color: '#2D3A4A', fontSize: '0.9375rem', lineHeight: 1.8, mb: 1.5 },
+                '& ul,& ol': { pl: 3, mb: 1.5 },
+                '& li': { color: '#2D3A4A', fontSize: '0.9375rem', lineHeight: 1.75, mb: 0.5 },
+                '& strong': { color: '#0A1628', fontWeight: 700 },
+                '& em': { color: '#546E7A' },
+                '& blockquote': {
+                  borderLeft: '3px solid #0047AB',
+                  ml: 0, pl: 2, py: 0.5,
+                  backgroundColor: alpha('#0047AB', 0.03),
+                  borderRadius: '0 6px 6px 0',
+                  '& p': { mb: 0, color: '#3D4E63', fontStyle: 'italic' },
+                },
+                '& hr': { border: 'none', borderTop: '1px solid #E8EDF5', my: 2.5 },
+                '& code': {
+                  backgroundColor: alpha('#0047AB', 0.06),
+                  color: '#0047AB',
+                  borderRadius: '4px',
+                  px: 0.75,
+                  py: 0.25,
+                  fontSize: '0.83rem',
+                  fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+                },
+                '& table': { width: '100%', borderCollapse: 'collapse', mb: 2, fontSize: '0.875rem' },
+                '& th': { backgroundColor: '#F0F4FF', color: '#0047AB', fontWeight: 700, p: 1.25, border: '1px solid #E8EDF5', textAlign: 'left' },
+                '& td': { p: 1.25, border: '1px solid #E8EDF5', color: '#2D3A4A' },
+                '& tr:nth-of-type(even) td': { backgroundColor: '#FAFBFF' },
+              }}
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+            </Box>
+          )}
+
+          {/* Edit — raw textarea */}
+          {editMode && (
+            <TextField
+              multiline
+              fullWidth
+              autoFocus
+              value={text}
+              onChange={(e) => handleChange(e.target.value)}
+              minRows={14}
+              maxRows={40}
+              placeholder={`Write your ${sectionDef.title} here…`}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  fontSize: '0.9rem',
+                  lineHeight: 1.75,
+                  fontFamily: '"JetBrains Mono", "Fira Code", "Courier New", monospace',
+                  color: '#2D3A4A',
+                  '& fieldset': { borderColor: '#E8EDF5' },
+                  '&:hover fieldset': { borderColor: '#C5D0E0' },
+                  '&.Mui-focused fieldset': { borderColor: '#0047AB', borderWidth: '1.5px' },
+                },
+              }}
+            />
+          )}
         </Box>
       )}
 

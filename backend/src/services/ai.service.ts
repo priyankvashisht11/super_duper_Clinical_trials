@@ -68,7 +68,7 @@ export class AIService {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
-        timeout: 30000, // 30 second timeout
+        timeout: 60000, // 60 second timeout
       });
 
       return response.data;
@@ -183,8 +183,6 @@ export class AIService {
       ],
       max_tokens: 3000,
       temperature: 0.4,
-      return_citations: true,
-      search_domain_filter: ['clinicaltrials.gov', 'fda.gov', 'ema.europa.eu', 'ich.org']
     });
 
     const content = response.choices[0]?.message?.content || '';

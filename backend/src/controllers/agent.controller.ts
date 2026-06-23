@@ -9,7 +9,7 @@ export const agentController = {
   // POST /api/agent/sessions — create a new session
   async createSession(req: Request, res: Response) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const { tab, title } = req.body as { tab: AgentTab; title: string };
@@ -25,7 +25,7 @@ export const agentController = {
   // GET /api/agent/sessions — list user's sessions
   async listSessions(req: Request, res: Response) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const tab = req.query['tab'] as AgentTab | undefined;
@@ -39,7 +39,7 @@ export const agentController = {
   // GET /api/agent/sessions/:id — get session with full history
   async getSession(req: Request, res: Response) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const session = await getSessionHistory(req.params['id'] as string);
@@ -74,7 +74,7 @@ export const agentController = {
 
   // GET /api/agent/run/:sessionId/stream — SSE streaming endpoint
   async streamRun(req: Request, res: Response) {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     if (!userId) {
       res.status(401).end();
       return;

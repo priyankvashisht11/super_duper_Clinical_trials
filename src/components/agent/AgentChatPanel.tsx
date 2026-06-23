@@ -305,6 +305,48 @@ const PLACEHOLDER: Record<AgentTab, string> = {
   analysis: 'Request analysis — e.g. "Generate a safety summary report for all enrolled patients"',
 };
 
+interface InputBoxProps {
+  large?: boolean;
+  tab: AgentTab;
+  input: string;
+  running: boolean;
+  onInputChange: (v: string) => void;
+  onSubmit: (q: string) => void;
+  onStop: () => void;
+}
+
+const InputBox: React.FC<InputBoxProps> = ({ large = false, tab, input, running, onInputChange, onSubmit, onStop }) => (
+  <Box sx={{
+    display: 'flex', alignItems: 'flex-end', gap: 1,
+    border: '1.5px solid', borderColor: running ? '#4F46E5' : '#E2E8F0',
+    borderRadius: large ? 3 : 2.5,
+    px: large ? 2.5 : 1.75, py: large ? 1.75 : 1,
+    backgroundColor: '#fff',
+    boxShadow: large ? '0 4px 24px rgba(0,0,0,0.07)' : running ? '0 0 0 3px rgba(79,70,229,0.1)' : 'none',
+    transition: 'all 0.2s',
+    '&:focus-within': large ? { borderColor: '#4F46E5', boxShadow: '0 0 0 3px rgba(79,70,229,0.1)' } : {},
+  }}>
+    <InputBase
+      fullWidth multiline maxRows={large ? 4 : 5}
+      placeholder={PLACEHOLDER[tab]}
+      value={input}
+      onChange={e => onInputChange(e.target.value)}
+      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmit(input); } }}
+      disabled={running}
+      sx={{ fontSize: large ? '1rem' : '0.875rem', color: '#0A1628', flex: 1, '& textarea::placeholder': { color: '#94A3B8' } }}
+    />
+    {running
+      ? <IconButton size="small" onClick={onStop} sx={{ p: large ? 1 : 0.75, backgroundColor: '#FEF2F2', borderRadius: 1.5, '&:hover': { backgroundColor: '#FEE2E2' } }}>
+          <StopIcon sx={{ fontSize: large ? 18 : 16, color: '#EF4444' }} />
+        </IconButton>
+      : <IconButton size="small" onClick={() => onSubmit(input)} disabled={!input.trim()}
+          sx={{ p: large ? 1 : 0.75, backgroundColor: input.trim() ? '#4F46E5' : '#F1F5F9', borderRadius: large ? 2 : 1.5, '&:hover': { backgroundColor: '#4338CA' }, '&:disabled': { backgroundColor: '#F1F5F9' }, transition: 'background 0.15s' }}>
+          <SendIcon sx={{ fontSize: large ? 18 : 15, color: input.trim() ? '#fff' : '#CBD5E1' }} />
+        </IconButton>
+    }
+  </Box>
+);
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 interface AgentMessage {
@@ -365,8 +407,23 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({ tab, title, sugg
     // Create session if needed
     let sid = sessionId;
     if (!sid) {
-      try { sid = await createSession(tab, q.slice(0, 100)); setSessionId(sid); }
-      catch { setRunning(false); return; }
+      try {
+        sid = await createSession(tab, q.slice(0, 100));
+        setSessionId(sid);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed to connect to agent service';
+        setInput(q);  // restore what user typed
+        setRunning(false);
+        setMessages(prev => [...prev, {
+          id: `err-${Date.now()}`,
+          type: 'assistant' as const,
+          steps: [],
+          synthesis: `⚠️ ${msg}. Please refresh and try again.`,
+          artifacts: [],
+          streaming: false,
+        }]);
+        return;
+      }
     }
 
     const userMsgId = `user-${Date.now()}`;
@@ -419,39 +476,6 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({ tab, title, sugg
 
   const isEmpty = messages.length === 0;
 
-  // ── Shared input box ───────────────────────────────────────────────────────
-  const InputBox = ({ large = false }: { large?: boolean }) => (
-    <Box sx={{
-      display: 'flex', alignItems: 'flex-end', gap: 1,
-      border: '1.5px solid', borderColor: running ? '#4F46E5' : '#E2E8F0',
-      borderRadius: large ? 3 : 2.5,
-      px: large ? 2.5 : 1.75, py: large ? 1.75 : 1,
-      backgroundColor: '#fff',
-      boxShadow: large ? '0 4px 24px rgba(0,0,0,0.07)' : running ? '0 0 0 3px rgba(79,70,229,0.1)' : 'none',
-      transition: 'all 0.2s',
-      '&:focus-within': large ? { borderColor: '#4F46E5', boxShadow: '0 0 0 3px rgba(79,70,229,0.1)' } : {},
-    }}>
-      <InputBase
-        fullWidth multiline maxRows={large ? 4 : 5}
-        placeholder={PLACEHOLDER[tab]}
-        value={input}
-        onChange={e => setInput(e.target.value)}
-        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSubmit(input); } }}
-        disabled={running}
-        sx={{ fontSize: large ? '1rem' : '0.875rem', color: '#0A1628', flex: 1, '& textarea::placeholder': { color: '#94A3B8' } }}
-      />
-      {running
-        ? <IconButton size="small" onClick={handleStop} sx={{ p: large ? 1 : 0.75, backgroundColor: '#FEF2F2', borderRadius: 1.5, '&:hover': { backgroundColor: '#FEE2E2' } }}>
-            <StopIcon sx={{ fontSize: large ? 18 : 16, color: '#EF4444' }} />
-          </IconButton>
-        : <IconButton size="small" onClick={() => void handleSubmit(input)} disabled={!input.trim()}
-            sx={{ p: large ? 1 : 0.75, backgroundColor: input.trim() ? '#4F46E5' : '#F1F5F9', borderRadius: large ? 2 : 1.5, '&:hover': { backgroundColor: '#4338CA' }, '&:disabled': { backgroundColor: '#F1F5F9' }, transition: 'background 0.15s' }}>
-            <SendIcon sx={{ fontSize: large ? 18 : 15, color: input.trim() ? '#fff' : '#CBD5E1' }} />
-          </IconButton>
-      }
-    </Box>
-  );
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
 
@@ -469,7 +493,7 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({ tab, title, sugg
 
           {/* Large centered search bar */}
           <Box sx={{ width: '100%', maxWidth: 700, mb: 4 }}>
-            <InputBox large />
+            <InputBox large tab={tab} input={input} running={running} onInputChange={setInput} onSubmit={q => void handleSubmit(q)} onStop={handleStop} />
             <Typography sx={{ fontSize: '0.68rem', color: '#CBD5E1', mt: 1, textAlign: 'center' }}>
               Enter to search · Shift+Enter for new line
             </Typography>
@@ -535,7 +559,7 @@ export const AgentChatPanel: React.FC<AgentChatPanelProps> = ({ tab, title, sugg
 
           {/* Input */}
           <Box sx={{ flexShrink: 0, px: 2, pt: 1.5, pb: 1.5, borderTop: '1px solid #F1F5F9' }}>
-            <InputBox />
+            <InputBox tab={tab} input={input} running={running} onInputChange={setInput} onSubmit={q => void handleSubmit(q)} onStop={handleStop} />
             <Typography sx={{ fontSize: '0.65rem', color: '#CBD5E1', mt: 0.75, textAlign: 'center' }}>
               Enter to send · Shift+Enter for new line · Powered by NexTrial Agent
             </Typography>

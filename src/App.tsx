@@ -15,6 +15,7 @@ import { ResearchPage } from './pages/ResearchPage';
 import { RegulatoryPage } from './pages/RegulatoryPage';
 import { PatientMatchPage } from './pages/PatientMatchPage';
 import { EDCPage } from './pages/EDCPage';
+import { CollectPage } from './pages/CollectPage';
 import { AnalysisPage } from './pages/AnalysisPage';
 import { ErrorBoundary, NotificationProvider } from './components/common';
 import { SearchProvider } from './contexts/SearchContext';
@@ -48,6 +49,9 @@ function App() {
 
               {/* EDC / Data Collection — Sprint 5 */}
               <Route path="/edc" element={<EDCPage />} />
+
+              {/* Collect — REDCap/ODK-inspired field data collection — Sprint 9 */}
+              <Route path="/collect" element={<CollectPage />} />
 
               {/* Analysis & Submission — Sprint 6 */}
               <Route path="/analysis" element={<AnalysisPage />} />

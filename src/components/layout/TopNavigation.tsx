@@ -36,6 +36,7 @@ const NAV_LINKS = [
   { label: 'Regulatory', path: '/regulatory' },
   { label: 'Match',      path: '/match'      },
   { label: 'EDC',        path: '/edc'        },
+  { label: 'Collect',    path: '/collect'    },
   { label: 'Analysis',   path: '/analysis'   },
   { label: 'Documents',  path: '/documents'  },
   { label: 'About',      path: '/about'      },

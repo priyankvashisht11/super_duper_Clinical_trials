@@ -1008,7 +1008,6 @@ export class ValidationEngine {
       await prisma.protocol.update({
         where: { id: report.protocolId },
         data: {
-          lastValidationDate: new Date(report.validationDate),
           completenessPercentage: report.completenessScore
         }
       });

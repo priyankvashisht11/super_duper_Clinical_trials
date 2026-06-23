@@ -1,7 +1,7 @@
 // EDC service — tries the API, falls back to localStorage on any error.
 // Every method that mutates state returns the complete EDCState after the operation.
 
-const API = 'http://localhost:3001/api/edc';
+const API = `${import.meta.env['VITE_API_URL'] || 'http://localhost:3001/api'}/edc`;
 const STORAGE_KEY = 'nextrial_edc_v1';
 
 // ── Types (mirrored from EDCPage) ─────────────────────────────────────────────

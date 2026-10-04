@@ -141,7 +141,7 @@ async function createForm(req: Request, res: Response): Promise<void> {
 
 async function deleteForm(req: Request, res: Response): Promise<void> {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const form = await prisma.crfForm.findUnique({ where: { id } });
     if (!form) { res.status(404).json({ ok: false, error: 'not found' }); return; }
     await prisma.crfForm.delete({ where: { id } });
@@ -154,7 +154,7 @@ async function deleteForm(req: Request, res: Response): Promise<void> {
 
 async function addField(req: Request, res: Response): Promise<void> {
   try {
-    const { formId } = req.params;
+    const { formId } = req.params as { formId: string };
     const existing = await prisma.crfField.findMany({ where: { formId }, select: { orderIndex: true } });
     await prisma.crfField.create({
       data: { formId, type: 'text', label: 'New Field', required: false, options: [], orderIndex: nextOrderIndex(existing) },
@@ -167,7 +167,7 @@ async function addField(req: Request, res: Response): Promise<void> {
 
 async function updateField(req: Request, res: Response): Promise<void> {
   try {
-    const { fieldId } = req.params;
+    const { fieldId } = req.params as { fieldId: string };
     const { type, label, required, options } = req.body as {
       type: string; label: string; required: boolean; options?: string[];
     };
@@ -183,7 +183,7 @@ async function updateField(req: Request, res: Response): Promise<void> {
 
 async function deleteField(req: Request, res: Response): Promise<void> {
   try {
-    const { fieldId } = req.params;
+    const { fieldId } = req.params as { fieldId: string };
     await prisma.crfField.delete({ where: { id: fieldId } });
     res.json({ ok: true, state: await getFullState() });
   } catch (err) {
@@ -193,7 +193,7 @@ async function deleteField(req: Request, res: Response): Promise<void> {
 
 async function moveField(req: Request, res: Response): Promise<void> {
   try {
-    const { formId, fieldId } = req.params;
+    const { formId, fieldId } = req.params as { formId: string; fieldId: string };
     const { dir } = req.body as { dir: 'up' | 'down' };
     const fields = await prisma.crfField.findMany({
       where: { formId },

@@ -47,11 +47,11 @@ export const toggleRule = async (req: Request, res: Response) => {
 
     const rule = await prisma.validationRule.update({
       where: { ruleId },
-      data: { isEnabled }
+      data: { isActive: isEnabled }
     });
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       data: rule,
       message: `Rule ${ruleId} ${isEnabled ? 'enabled' : 'disabled'}`
     });

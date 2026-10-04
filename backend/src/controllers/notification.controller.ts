@@ -107,7 +107,7 @@ export async function markAsRead(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     // Verify notification belongs to user
     const notification = await prisma.notification.findFirst({
@@ -197,7 +197,7 @@ export async function deleteNotification(req: Request, res: Response): Promise<v
       return;
     }
 
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     // Verify notification belongs to user
     const notification = await prisma.notification.findFirst({

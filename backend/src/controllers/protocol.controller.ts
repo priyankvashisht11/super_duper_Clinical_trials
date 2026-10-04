@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import prisma from '../db';
 import {
   CreateProtocolSchema,
@@ -158,7 +159,9 @@ export const protocolController = {
   addObjective: async (req: Request, res: Response) => {
     try {
       const validated = CreateObjectiveSchema.parse(req.body);
-      const objective = await prisma.objective.create({ data: { ...validated, orderIndex: validated.orderIndex || 0 } });
+      const objective = await prisma.objective.create({
+        data: { ...validated, orderIndex: validated.orderIndex || 0 } as Prisma.ObjectiveUncheckedCreateInput,
+      });
       res.status(201).json({ success: true, data: objective });
     } catch (error: any) {
       res.status(400).json({ success: false, error: error.message });
@@ -183,7 +186,11 @@ export const protocolController = {
         where: { protocolId: validated.protocolId, criterionType: validated.criterionType }
       });
       const criterion = await prisma.eligibilityCriterion.create({
-        data: { ...validated, criterionNumber: `${count + 1}`, orderIndex: validated.orderIndex ?? count }
+        data: {
+          ...validated,
+          criterionNumber: `${count + 1}`,
+          orderIndex: validated.orderIndex ?? count,
+        } as Prisma.EligibilityCriterionUncheckedCreateInput,
       });
       res.status(201).json({ success: true, data: criterion });
     } catch (error: any) {
@@ -215,7 +222,9 @@ export const protocolController = {
   addIntervention: async (req: Request, res: Response) => {
     try {
       const validated = CreateInterventionSchema.parse(req.body);
-      const intervention = await prisma.intervention.create({ data: validated });
+      const intervention = await prisma.intervention.create({
+        data: { ...validated, orderIndex: 0 } as Prisma.InterventionUncheckedCreateInput,
+      });
       res.status(201).json({ success: true, data: intervention });
     } catch (error: any) {
       res.status(400).json({ success: false, error: error.message });

@@ -365,7 +365,7 @@ export async function revokeSession(req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const { sessionId } = req.params;
+    const { sessionId } = req.params as { sessionId: string };
 
     // Verify session belongs to user
     const session = await prisma.session.findFirst({

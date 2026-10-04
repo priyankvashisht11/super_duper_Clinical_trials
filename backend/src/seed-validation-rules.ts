@@ -60,7 +60,7 @@ async function seedValidationRules() {
       update: {},
       create: {
         ...rule,
-        isEnabled: true
+        isActive: true
       }
     });
   }

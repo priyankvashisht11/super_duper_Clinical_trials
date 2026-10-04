@@ -59,14 +59,15 @@ model ProtocolSection {
   
   // Content stored as structured JSON
   content         Json      @default("{}")
-  
+  isComplete      Boolean   @default(false) @map("is_complete")
+
   // Metadata
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
-  
+
   // Relations
   protocol        Protocol  @relation(fields: [protocolId], references: [id], onDelete: Cascade)
-  
+
   @@unique([protocolId, sectionNumber])
   @@map("protocol_sections")
 }

@@ -110,8 +110,8 @@ async function main() {
   // Insert terminologies
   for (const term of allTerminologies) {
     await prisma.controlledTerminology.upsert({
-      where: { 
-        unique_domain_code: {
+      where: {
+        domain_code: {
           domain: term.domain,
           code: term.code
         }

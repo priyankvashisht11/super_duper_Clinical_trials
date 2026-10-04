@@ -55,8 +55,11 @@ export class ResearchService {
                 const formatted = this.formatClinicalTrial(study);
                 if (formatted) {
                   // Add relevance score based on query match
-                  formatted.relevanceScore = this.calculateRelevanceScore(formatted, query);
-                  formatted.queryStrategy = searchQuery === query ? 'direct' : 'expanded';
+                  return {
+                    ...formatted,
+                    relevanceScore: this.calculateRelevanceScore(formatted, query),
+                    queryStrategy: searchQuery === query ? 'direct' : 'expanded',
+                  };
                 }
                 return formatted;
               } catch (error: any) {
@@ -614,14 +617,14 @@ Be specific and accurate. If NCT ID is not available, create a unique identifier
               timeout: 15000 
             });
             
-            const articles = this.formatPubMedArticles(fetchResponse.data.result, ids);
-            
             // Add relevance score and strategy info
-            articles.forEach(article => {
-              if (article) {
-                article.relevanceScore = this.calculateArticleRelevanceScore(article, query);
-                article.searchStrategy = strategy.label;
-              }
+            const articles = this.formatPubMedArticles(fetchResponse.data.result, ids).map(article => {
+              if (!article) return article;
+              return {
+                ...article,
+                relevanceScore: this.calculateArticleRelevanceScore(article, query),
+                searchStrategy: strategy.label,
+              };
             });
 
             allArticles.push(...articles.filter(Boolean));

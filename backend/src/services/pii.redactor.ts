@@ -21,8 +21,14 @@ const PII_PATTERNS: Array<{ re: RegExp; label: string }> = [
   { re: /\b[6-9]\d{9}\b/g, label: 'PHONE' },
   { re: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, label: 'EMAIL' },
   // DOB dates: DD/MM/YYYY, YYYY-MM-DD, DD-MM-YY
-  { re: /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g, label: 'DOB' },
-  { re: /\bMRN[-:\s]?\w+\b/gi, label: 'MRN' },
+  // First group allows up to 4 digits (not just 2) — otherwise YYYY-MM-DD never matches
+  // ("1971" needs 4 digits but the old {1,2} cap meant the leading \b + \d{1,2} + separator
+  // sequence could never align, so every YYYY-MM-DD date silently passed through unredacted).
+  { re: /\b\d{1,4}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g, label: 'DOB' },
+  // `*` not `?` on the separator class — "MRN: 004521" has TWO separator chars (":" then " "),
+  // and the old `?` (zero-or-one) only ever consumed one, leaving \w+ to fail against the
+  // remaining space. That silently let colon-plus-space MRNs (a common real format) through.
+  { re: /\bMRN[-:\s]*\w+\b/gi, label: 'MRN' },
   // Standard clinical trial subject ID prefixes
   { re: /\b(?:P|PT|SUB|SUBJ|PAT)[-_]?\d+\b/gi, label: 'PATIENT_ID' },
   // Aadhaar: XXXX XXXX XXXX

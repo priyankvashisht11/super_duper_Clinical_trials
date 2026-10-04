@@ -33,16 +33,18 @@ export interface AgentArtifact {
   content?: string; createdAt: string;
 }
 
-function authHeaders(): Record<string, string> {
-  const token = localStorage.getItem('auth_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
+// Auth is carried by the httpOnly session cookie — `credentials: 'include'` makes
+// fetch() send it; EventSource needs the explicit `withCredentials` option below.
+// (Previously the token was passed as `?token=` in the URL because EventSource
+// couldn't set an Authorization header — that also meant it ended up in server
+// access logs and browser history. Cookies remove the need for that entirely.)
 
 // Create a new agent session, return sessionId
 export async function createSession(tab: AgentTab, title: string): Promise<string> {
   const res = await fetch(`${API_BASE}/agent/sessions`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tab, title }),
   });
   const json = await res.json();
@@ -53,14 +55,14 @@ export async function createSession(tab: AgentTab, title: string): Promise<strin
 // List sessions for a tab
 export async function listSessions(tab?: AgentTab): Promise<AgentSession[]> {
   const url = tab ? `${API_BASE}/agent/sessions?tab=${tab}` : `${API_BASE}/agent/sessions`;
-  const res = await fetch(url, { headers: authHeaders() });
+  const res = await fetch(url, { credentials: 'include' });
   const json = await res.json();
   return json.success ? (json.data as AgentSession[]) : [];
 }
 
 // Get full session history
 export async function getSession(sessionId: string): Promise<{ session: AgentSession; messages: AgentMessage[]; artifacts: AgentArtifact[] } | null> {
-  const res = await fetch(`${API_BASE}/agent/sessions/${sessionId}`, { headers: authHeaders() });
+  const res = await fetch(`${API_BASE}/agent/sessions/${sessionId}`, { credentials: 'include' });
   const json = await res.json();
   if (!json.success) return null;
   return { session: json.data, messages: json.data.messages ?? [], artifacts: json.data.artifacts ?? [] };
@@ -76,11 +78,10 @@ export function streamRun(opts: {
   onError: (err: string) => void;
 }): () => void {
   const { sessionId, tab, query, onEvent, onDone, onError } = opts;
-  const token = localStorage.getItem('auth_token') || '';
-  const params = new URLSearchParams({ query, tab, token });
+  const params = new URLSearchParams({ query, tab });
   const url = `${API_BASE}/agent/run/${sessionId}/stream?${params}`;
 
-  const source = new EventSource(url);
+  const source = new EventSource(url, { withCredentials: true });
 
   source.onmessage = (e) => {
     try {
@@ -101,8 +102,8 @@ export function streamRun(opts: {
   return () => source.close();
 }
 
-// Download artifact URL
+// Download artifact URL — a plain top-level navigation (<a href>) still sends the
+// session cookie automatically (SameSite=Lax allows it), so no token param is needed.
 export function artifactDownloadUrl(artifactId: string): string {
-  const token = localStorage.getItem('auth_token') || '';
-  return `${API_BASE}/agent/artifacts/${artifactId}/download?token=${token}`;
+  return `${API_BASE}/agent/artifacts/${artifactId}/download`;
 }

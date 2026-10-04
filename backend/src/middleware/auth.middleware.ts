@@ -22,9 +22,10 @@ export async function authenticateToken(
   next: NextFunction
 ): Promise<void> {
   try {
+    // Cookie is primary now (httpOnly access_token, set on login/register/refresh).
+    // Authorization header kept as a fallback for any non-browser API client.
     const authHeader = req.headers['authorization'];
-    // EventSource can't set headers — SSE endpoints pass token as ?token= query param
-    const token = (authHeader && authHeader.split(' ')[1]) || (req.query['token'] as string | undefined);
+    const token = req.cookies?.['access_token'] || (authHeader && authHeader.split(' ')[1]);
 
     if (!token) {
       res.status(401).json({
@@ -115,7 +116,7 @@ export async function optionalAuth(
 ): Promise<void> {
   try {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = req.cookies?.['access_token'] || (authHeader && authHeader.split(' ')[1]);
 
     if (token) {
       const payload = verifyToken(token);

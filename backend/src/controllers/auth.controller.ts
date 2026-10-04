@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, CookieOptions } from 'express';
 import { PrismaClient } from '@prisma/client';
 import {
   hashPassword,
@@ -10,8 +10,32 @@ import {
   getTokenExpiry,
   getRefreshTokenExpiry,
 } from '../utils/auth.utils';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../services/email.service';
 
 const prisma = new PrismaClient();
+
+// ── httpOnly cookie auth ────────────────────────────────────────────────────────
+// Tokens live only in httpOnly cookies now, never in a JSON response body or
+// localStorage — closes the XSS-can-read-the-token gap flagged in docs/tech_debt.md.
+const isProd = process.env.NODE_ENV === 'production';
+const baseCookieOpts: CookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: 'lax',
+  path: '/',
+};
+
+function setAuthCookies(res: Response, token: string, refreshToken: string, rememberMe: boolean): void {
+  const accessMaxAgeMs = (rememberMe ? 720 : 24) * 60 * 60 * 1000;
+  const refreshMaxAgeMs = 30 * 24 * 60 * 60 * 1000;
+  res.cookie('access_token', token, { ...baseCookieOpts, maxAge: accessMaxAgeMs });
+  res.cookie('refresh_token', refreshToken, { ...baseCookieOpts, maxAge: refreshMaxAgeMs });
+}
+
+function clearAuthCookies(res: Response): void {
+  res.clearCookie('access_token', baseCookieOpts);
+  res.clearCookie('refresh_token', baseCookieOpts);
+}
 
 /**
  * Register a new user
@@ -97,8 +121,9 @@ export async function register(req: Request, res: Response): Promise<void> {
       },
     });
 
-    // TODO: Send verification email
+    void sendVerificationEmail(user.email, user.firstName, verificationToken);
 
+    setAuthCookies(res, token, refreshToken, false);
     res.status(201).json({
       success: true,
       data: {
@@ -113,8 +138,6 @@ export async function register(req: Request, res: Response): Promise<void> {
           role: user.role,
           emailVerified: user.emailVerified,
         },
-        token,
-        refreshToken,
       },
     });
   } catch (error) {
@@ -193,6 +216,7 @@ export async function login(req: Request, res: Response): Promise<void> {
       data: { lastLoginAt: new Date() },
     });
 
+    setAuthCookies(res, token, refreshToken, !!rememberMe);
     res.json({
       success: true,
       data: {
@@ -208,8 +232,6 @@ export async function login(req: Request, res: Response): Promise<void> {
           emailVerified: user.emailVerified,
           profileImageUrl: user.profileImageUrl,
         },
-        token,
-        refreshToken,
       },
     });
   } catch (error) {
@@ -226,8 +248,7 @@ export async function login(req: Request, res: Response): Promise<void> {
  */
 export async function logout(req: Request, res: Response): Promise<void> {
   try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = req.cookies?.['access_token'];
 
     if (token) {
       // Invalidate session
@@ -237,6 +258,7 @@ export async function logout(req: Request, res: Response): Promise<void> {
       });
     }
 
+    clearAuthCookies(res);
     res.json({
       success: true,
       message: 'Logged out successfully',
@@ -255,7 +277,7 @@ export async function logout(req: Request, res: Response): Promise<void> {
  */
 export async function refreshToken(req: Request, res: Response): Promise<void> {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies?.['refresh_token'];
 
     if (!refreshToken) {
       res.status(400).json({
@@ -303,12 +325,11 @@ export async function refreshToken(req: Request, res: Response): Promise<void> {
       },
     });
 
-    res.json({
-      success: true,
-      data: {
-        token: newToken,
-      },
-    });
+    // Refresh token itself is unchanged (still valid for its remaining lifetime) — only
+    // the access-token cookie needs rewriting; re-set both so maxAge/expiry stay fresh.
+    res.cookie('access_token', newToken, { ...baseCookieOpts, maxAge: 24 * 60 * 60 * 1000 });
+    res.cookie('refresh_token', refreshToken, { ...baseCookieOpts, maxAge: 30 * 24 * 60 * 60 * 1000 });
+    res.json({ success: true, message: 'Token refreshed' });
   } catch (error) {
     console.error('Token refresh error:', error);
     res.status(403).json({
@@ -349,7 +370,7 @@ export async function forgotPassword(req: Request, res: Response): Promise<void>
       },
     });
 
-    // TODO: Send password reset email
+    void sendPasswordResetEmail(user.email, user.firstName, resetToken);
 
     res.json({
       success: true,

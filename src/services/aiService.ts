@@ -54,6 +54,7 @@ class AIService {
     try {
       const response = await fetch(`${API_BASE_URL}/ai/${endpoint}`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },

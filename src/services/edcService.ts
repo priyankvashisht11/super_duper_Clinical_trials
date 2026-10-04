@@ -135,6 +135,7 @@ function saveLocal(s: EDCState): void {
 
 async function apiCall(path: string, opts: RequestInit = {}): Promise<EDCState> {
   const r = await fetch(`${API}${path}`, {
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     ...opts,
   });

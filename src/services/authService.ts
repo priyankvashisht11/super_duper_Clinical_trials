@@ -2,6 +2,12 @@ import axios from 'axios';
 
 const API_URL = import.meta.env['VITE_API_URL'] || 'http://localhost:3001/api';
 
+// Auth tokens live only in httpOnly cookies now (set by the backend on login/register/
+// refresh) — never in localStorage or JS-readable state. This closes the XSS-can-steal-
+// the-token gap: any script injected into the page simply cannot read an httpOnly cookie.
+// `withCredentials` makes the browser send/receive those cookies on every request below.
+axios.defaults.withCredentials = true;
+
 export interface User {
   id: string;
   email: string;
@@ -24,8 +30,6 @@ export interface User {
 
 export interface AuthResponse {
   user: User;
-  token: string;
-  refreshToken: string;
 }
 
 export interface RegisterData {
@@ -39,21 +43,15 @@ export interface RegisterData {
   licenseNumber?: string;
 }
 
-// Create axios instance with interceptors
+// Create axios instance — auth is carried by the httpOnly cookies set by the backend,
+// so no request interceptor is needed to attach a token.
 const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true,
 });
 
-// Add token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Handle token refresh on 401
+// On a 401, try refreshing the access-token cookie once (refresh token cookie carries
+// the request automatically) and retry the original call.
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -63,23 +61,11 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (refreshToken) {
-          const response = await axios.post(`${API_URL}/auth/refresh`, {
-            refreshToken,
-          });
-
-          const { token } = response.data.data;
-          localStorage.setItem('auth_token', token);
-
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return api(originalRequest);
-        }
+        await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
+        return api(originalRequest);
       } catch (refreshError) {
-        // Refresh failed, clear auth and redirect to login
-        localStorage.removeItem('auth_token');
+        // Refresh failed — clear cached user display info and redirect to login.
         localStorage.removeItem('auth_user');
-        localStorage.removeItem('refresh_token');
         window.location.href = '/';
         return Promise.reject(refreshError);
       }
@@ -94,7 +80,7 @@ export const authService = {
    * Register a new user
    */
   async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await axios.post(`${API_URL}/auth/register`, data);
+    const response = await axios.post(`${API_URL}/auth/register`, data, { withCredentials: true });
     return response.data.data;
   },
 
@@ -102,11 +88,11 @@ export const authService = {
    * Login user
    */
   async login(email: string, password: string, rememberMe: boolean = false): Promise<AuthResponse> {
-    const response = await axios.post(`${API_URL}/auth/login`, {
-      email,
-      password,
-      rememberMe,
-    });
+    const response = await axios.post(
+      `${API_URL}/auth/login`,
+      { email, password, rememberMe },
+      { withCredentials: true }
+    );
     return response.data.data;
   },
 

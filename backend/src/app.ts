@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { protocolRoutes } from './routes/protocol.routes';
 import aiRoutes from './routes/ai.routes';
@@ -26,6 +27,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Health check
 app.get('/health', (req, res) => {

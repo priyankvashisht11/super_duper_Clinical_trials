@@ -4,7 +4,6 @@ import authService, { type User } from '../services/authService';
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
@@ -28,33 +27,29 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize auth state from localStorage
+  // Auth state lives in httpOnly cookies the browser manages for us — there's no token
+  // for this code to hold. `auth_user` in localStorage is just a cached display copy
+  // (name/role etc., not a credential) so the UI can render instantly before the
+  // network round-trip below confirms (or clears) it.
   useEffect(() => {
     const initAuth = async () => {
-      const storedToken = localStorage.getItem('auth_token');
       const storedUser = localStorage.getItem('auth_user');
-
-      if (storedToken && storedUser) {
-        try {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
-          
-          // Verify token is still valid by fetching current user
-          const currentUser = await authService.getCurrentUser();
-          setUser(currentUser);
-        } catch (error) {
-          // Token is invalid, clear auth state
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('auth_user');
-          localStorage.removeItem('refresh_token');
-          setToken(null);
-          setUser(null);
-        }
+      if (storedUser) {
+        try { setUser(JSON.parse(storedUser)); } catch { /* ignore corrupt cache */ }
       }
-      
+
+      try {
+        const currentUser = await authService.getCurrentUser();
+        setUser(currentUser);
+        localStorage.setItem('auth_user', JSON.stringify(currentUser));
+      } catch (error) {
+        // No valid session cookie (or it expired) — clear cached state.
+        localStorage.removeItem('auth_user');
+        setUser(null);
+      }
+
       setIsLoading(false);
     };
 
@@ -62,35 +57,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string, rememberMe: boolean = false) => {
-    try {
-      const response = await authService.login(email, password, rememberMe);
-      
-      setToken(response.token);
-      setUser(response.user);
-      
-      // Store in localStorage
-      localStorage.setItem('auth_token', response.token);
-      localStorage.setItem('auth_user', JSON.stringify(response.user));
-      localStorage.setItem('refresh_token', response.refreshToken);
-    } catch (error) {
-      throw error;
-    }
+    const response = await authService.login(email, password, rememberMe);
+    setUser(response.user);
+    localStorage.setItem('auth_user', JSON.stringify(response.user));
   };
 
   const register = async (data: RegisterData) => {
-    try {
-      const response = await authService.register(data);
-      
-      setToken(response.token);
-      setUser(response.user);
-      
-      // Store in localStorage
-      localStorage.setItem('auth_token', response.token);
-      localStorage.setItem('auth_user', JSON.stringify(response.user));
-      localStorage.setItem('refresh_token', response.refreshToken);
-    } catch (error) {
-      throw error;
-    }
+    const response = await authService.register(data);
+    setUser(response.user);
+    localStorage.setItem('auth_user', JSON.stringify(response.user));
   };
 
   const logout = async () => {
@@ -99,12 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear state regardless of API call success
-      setToken(null);
       setUser(null);
-      localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_user');
-      localStorage.removeItem('refresh_token');
     }
   };
 
@@ -115,8 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = {
     user,
-    token,
-    isAuthenticated: !!user && !!token,
+    isAuthenticated: !!user,
     isLoading,
     login,
     register,

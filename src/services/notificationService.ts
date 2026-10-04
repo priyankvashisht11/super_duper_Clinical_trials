@@ -22,17 +22,10 @@ export interface NotificationsResponse {
   totalPages: number;
 }
 
-// Create axios instance with auth token
+// Auth is carried by the httpOnly session cookie set by the backend — no token to attach.
 const api = axios.create({
   baseURL: API_URL,
-});
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  withCredentials: true,
 });
 
 export const notificationService = {

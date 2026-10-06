@@ -65,7 +65,7 @@ Wired into: `match` and `edc` tab configs via `requiresPIIRedaction: true` flag.
   - Restore round-trip for structured tokens (generalized fields cannot restore — test that too)
   - Mixed Hindi city names with Latin script
 
-- [ ] **queryHash per-tenant salt** — when multi-tenant is introduced (Phase 6), salt SHA-256 with `userId` to prevent rainbow-table correlation across tenants. Note in Phase 6 design doc.
+- [x] **queryHash per-tenant salt** — done early (2026-10-04), ahead of multi-tenant work. `hashInput()` in `agent.orchestrator.ts` now salts with `userId` (`sha256(userId:query)`) rather than waiting for Phase 6.
 
 - [ ] Log redaction events to AgentAuditLog (already wired, verify counts are correct)
 
@@ -78,7 +78,7 @@ Fields: userId, sessionId, action (PLAN/TOOL_CALL/SYNTHESIS/ARTIFACT/PII_REDACTE
 Migration: `20260515075836_add_agent_audit_log` — applied.
 
 **Remaining work:**
-- [ ] Admin endpoint: `GET /api/agent/audit?userId=&from=&to=` — for PI or CDSCO inspector to download their own audit trail
+- [x] Admin endpoint: `GET /api/agent/audit?userId=&from=&to=&page=&limit=` — shipped 2026-10-04. Any authenticated user gets their own trail by default; passing a different `userId` requires `role === 'admin'`. Pagination added (not in the original spec line but needed for an append-only, ever-growing log). No signed-PDF export yet (see below).
 - [ ] Retention policy: audit logs must be retained ≥1 year (DPDP §8(7)) — add a scheduled n8n job to archive to cold storage after 1 year
 - [ ] Export as signed PDF: for GCP inspection readiness
 
@@ -173,9 +173,9 @@ console.log(JSON.stringify({
 
 ## Acceptance Criteria
 
-- [ ] PIIRedactor unit tests: 8 patterns × redact + restore = 16 test cases, all green
+- [x] PIIRedactor unit tests — shipped 2026-10-04 as `backend/src/services/pii.redactor.test.ts`, 36 adversarial cases (exceeds the spec's 30-case minimum), all green. Run via `npm test` in `backend/` (Node's built-in test runner via `tsx --test` — no new dependency needed; an earlier attempt to add `vitest` was killed by the sandbox, OOM, so this path was used instead). **Found and fixed two real redaction gaps in the process**, not just test-writing: the DOB regex never actually matched `YYYY-MM-DD` (the `\d{1,2}` cap on the first group made it structurally unable to, despite the inline comment claiming support), and the MRN regex's `[-:\s]?` (zero-or-one) only consumed one separator character, so `"MRN: 004521"` (colon *and* space) silently passed through unredacted. Both are fixed in `pii.redactor.ts`. NER-based name detection (the "John Smith" case below) remains open — regex alone cannot catch it.
 - [ ] Named-entity name detection blocks "John Smith" from reaching LLM (95% precision target)
-- [ ] `GET /api/agent/audit` returns paginated logs for authenticated user
+- [x] `GET /api/agent/audit` returns paginated logs for authenticated user — shipped 2026-10-04
 - [ ] CTRI Qdrant search returns real CTRI trial data for "diabetes" query
 - [ ] n8n CTRI ingestion cron runs on schedule and updates Qdrant
 - [ ] Research briefs embedded and retrievable by semantic similarity

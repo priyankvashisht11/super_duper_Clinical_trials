@@ -11,6 +11,7 @@ router.post('/sessions', agentController.createSession);
 router.get('/sessions', agentController.listSessions);
 router.get('/sessions/:id', agentController.getSession);
 router.get('/artifacts/:id/download', agentController.downloadArtifact);
+router.get('/audit', agentController.getAuditLog);
 
 // SSE streaming run — query params: ?query=...&tab=...
 router.get('/run/:sessionId/stream', agentController.streamRun);

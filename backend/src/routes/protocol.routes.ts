@@ -2,6 +2,7 @@ import { Router } from 'express';
 import protocolControllerModule from '../controllers/protocol.controller';
 import * as validationController from '../controllers/validation.controller';
 import * as validationRulesController from '../controllers/validation-rules.controller';
+import { authenticateToken, requireRole } from '../middleware/auth.middleware';
 
 const router = Router();
 // Handle both named and default exports
@@ -14,7 +15,16 @@ router.get('/terminologies/:domain', protocolController.getTerminology);
 // Validation Rules Management (must come BEFORE /:id routes)
 router.get('/validation-rules', validationRulesController.getAllRules);
 router.get('/validation-rules/:ruleId', validationRulesController.getRuleById);
-router.patch('/validation-rules/:ruleId/toggle', validationRulesController.toggleRule);
+// Enabling/disabling a rule affects validation for every user — admin-only.
+// (Everything else in this router is NOT behind auth at all yet — see docs/tech_debt.md
+// "No authentication on protocol/ai/research/match/analysis/edc routes" for why that's
+// a flagged, deliberately-unresolved gap rather than an oversight in this specific change.)
+router.patch(
+  '/validation-rules/:ruleId/toggle',
+  authenticateToken,
+  requireRole('admin'),
+  validationRulesController.toggleRule
+);
 
 // Protocol CRUD
 router.post('/', protocolController.create);

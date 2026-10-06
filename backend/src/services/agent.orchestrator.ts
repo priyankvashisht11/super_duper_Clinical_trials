@@ -88,8 +88,11 @@ const prisma = new PrismaClient();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function hashInput(text: string): string {
-  return createHash('sha256').update(text).digest('hex').slice(0, 16);
+// Salted per-user so two users submitting the same query produce different hashes —
+// closes the cross-tenant rainbow-table correlation risk flagged in
+// sprints/sprint-09-compliance-layer.md and docs/tech_debt.md.
+function hashInput(text: string, userId: string): string {
+  return createHash('sha256').update(`${userId}:${text}`).digest('hex').slice(0, 16);
 }
 
 async function writeAudit(opts: {
@@ -482,7 +485,7 @@ export async function runAgent(opts: {
 
     await writeAudit({
       userId, sessionId, action: 'PLAN',
-      queryHash: hashInput(safeQuery), status: 'ok',
+      queryHash: hashInput(safeQuery, userId), status: 'ok',
       durationMs: Date.now() - t0,
     });
 
@@ -517,7 +520,7 @@ export async function runAgent(opts: {
       await writeAudit({
         userId, sessionId, action: 'TOOL_CALL',
         toolName: step.tool,
-        queryHash: hashInput(step.query),
+        queryHash: hashInput(step.query, userId),
         status: result.status,
         durationMs: Date.now() - ts,
         meta: { count: result.count ?? 0 },
@@ -622,5 +625,39 @@ export async function getUserSessions(userId: string, tab?: AgentTab) {
 }
 
 export async function getArtifact(artifactId: string) {
-  return prisma.agentArtifact.findUnique({ where: { id: artifactId } });
+  return prisma.agentArtifact.findUnique({
+    where: { id: artifactId },
+    include: { session: { select: { userId: true } } },
+  });
+}
+
+// GCP/21 CFR Part 11 audit-trail export — sprints/sprint-09-compliance-layer.md item 2.
+// Any authenticated user can pull their OWN trail (a PI or CDSCO inspector downloading
+// proof of system behavior); pulling another user's trail is admin-only — enforced by
+// the caller (agent.controller.ts), not here, since that's an authorization decision,
+// not a data-access one.
+export async function getAuditLog(userId: string, opts: { from?: Date; to?: Date; page?: number; limit?: number }) {
+  const page = opts.page && opts.page > 0 ? opts.page : 1;
+  const limit = opts.limit && opts.limit > 0 ? Math.min(opts.limit, 200) : 50;
+  const where = {
+    userId,
+    ...((opts.from || opts.to) && {
+      createdAt: {
+        ...(opts.from && { gte: opts.from }),
+        ...(opts.to && { lte: opts.to }),
+      },
+    }),
+  };
+
+  const [entries, totalCount] = await Promise.all([
+    prisma.agentAuditLog.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.agentAuditLog.count({ where }),
+  ]);
+
+  return { entries, totalCount, page, totalPages: Math.ceil(totalCount / limit) };
 }

@@ -326,8 +326,7 @@ Confirmed product principles (from the original positioning doc and prior planni
 
 ## 13. Git / Branching
 
-- `master` is the actual working branch (confusingly, `main` also exists as a separate, apparently less-current branch — check with your collaborator before assuming which one is canonical for a given task)
-- `origin/shivam_1.0` — a teammate's (Shivam's) branch
+- `master` is the actual working branch (confusingly, `main` also exists as a separate, apparently less-current branch, with just a single "Initial commit" — treat `master` as canonical unless told otherwise)
 - Recent commit history before 2026-10-04 was entirely production-deployment hardening: Prisma/Alpine/OpenSSL fixes, TypeScript-bypass-for-build fixes, SCP-based deploy, `VITE_API_URL` consistency fixes. The 2026-10-04 commits are the first substantive backend-hardening work since then: all 24 backend TypeScript errors fixed, httpOnly-cookie auth migration, a working email service, two narrow RBAC applications, an artifact-ownership fix, PIIRedactor test suite (+2 real bugs it found), and backfilled sprint-10/11 docs. See `docs/tech_debt.md` for the detailed writeup of each.
 
 ---
